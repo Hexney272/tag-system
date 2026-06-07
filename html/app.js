@@ -12,7 +12,7 @@ function card(bg, inner) {
 }
 
 const ICONS = {
-    // mikrofon: fehér alapból, zöld ha beszél
+    // mikrofon: zöld (csak beszéd közben jelenik meg)
     mic(active) {
         return card(active ? BG_GREEN : BG_WHITE,
             `<rect x="44" y="22" width="40" height="54" rx="20" fill="none" stroke="#2A2A2A" stroke-width="4"/>`
@@ -95,7 +95,6 @@ function renderPlayers(list) {
             tags[p.serverId] = el;
         }
 
-        // pozíció + skála
         el.style.left = (p.x * sw) + 'px';
         el.style.top  = (p.y * sh) + 'px';
         el.style.transform = `translate(-50%, -100%) scale(${p.scale.toFixed(3)})`;
@@ -104,7 +103,6 @@ function renderPlayers(list) {
         el.classList.toggle('dead', !!isDeadTimer);
 
         if (isDeadTimer) {
-            // csak a halott-időzítő látszik
             el.querySelector('.death').style.display = 'flex';
             el.querySelector('.timer').textContent = fmtTime(p.deathRemaining);
         } else {
@@ -116,11 +114,8 @@ function renderPlayers(list) {
                 const nameEl = el.querySelector('.name');
                 if (p.name) {
                     nameEl.innerHTML = `${p.name} <span class="id">[${p.serverId}]</span>`;
-                    nameEl.style.display = '';
                 } else {
-                    // nincs karakternév (statebag) -> ne írjunk CFX nevet
                     nameEl.innerHTML = `<span class="id">[${p.serverId}]</span>`;
-                    nameEl.style.display = '';
                 }
                 el._cache.name = nameKey;
             }
@@ -143,10 +138,8 @@ function renderPlayers(list) {
 
             // ikonok (a név jobb oldalán)
             const icons = [];
-            // mic mindig látszik: fehér, zöld ha beszél
-            if (p.mic) {
-                icons.push(`<span class="icon mic${p.talking ? ' talking' : ''}">${ICONS.mic(p.talking)}</span>`);
-            }
+            // mic CSAK beszéd közben -> mindig zöld
+            if (p.mic) icons.push(`<span class="icon mic talking">${ICONS.mic(true)}</span>`);
             if (p.radio)  icons.push(`<span class="icon">${ICONS.radio}</span>`);
             if (p.phone)  icons.push(`<span class="icon">${ICONS.phone}</span>`);
             if (p.armour) icons.push(`<span class="icon">${ICONS.armour}</span>`);
@@ -169,8 +162,8 @@ function renderPlayers(list) {
     }
 }
 
-// ====== JÁRMŰ RENDSZÁMTÁBLÁK ======
-function renderVehicles(list, brand, server) {
+// ====== JÁRMŰ RENDSZÁMTÁBLÁK (modern, valódi kinézet) ======
+function renderVehicles(list, region) {
     const seen = {};
     const sw = window.innerWidth, sh = window.innerHeight;
 
@@ -184,9 +177,12 @@ function renderVehicles(list, brand, server) {
             el.className = 'plate';
             el.innerHTML = `
                 <div class="board">
-                    <div class="brand"></div>
+                    <span class="bolt tl"></span>
+                    <span class="bolt tr"></span>
+                    <span class="bolt bl"></span>
+                    <span class="bolt br"></span>
+                    <div class="region"></div>
                     <div class="number"></div>
-                    <div class="sub"></div>
                 </div>
             `;
             el._cache = {};
@@ -198,11 +194,11 @@ function renderVehicles(list, brand, server) {
         el.style.top  = (v.y * sh) + 'px';
         el.style.transform = `translate(-50%, -100%) scale(${v.scale.toFixed(3)})`;
 
-        if (el._cache.plate !== v.plate) {
-            el.querySelector('.brand').textContent = brand || 'RealRP';
+        const key = `${region || 'RealCity'}|${v.plate}`;
+        if (el._cache.plate !== key) {
+            el.querySelector('.region').textContent = region || 'RealCity';
             el.querySelector('.number').textContent = v.plate;
-            el.querySelector('.sub').textContent = server || '';
-            el._cache.plate = v.plate;
+            el._cache.plate = key;
         }
     }
 
@@ -216,7 +212,6 @@ window.addEventListener('message', (e) => {
     if (d.action === 'visibility') {
         document.body.classList.toggle('overlay-hidden', d.visible === false);
         if (d.visible === false) {
-            // takarítás, hogy semmi ne maradjon a képernyőn
             for (const id in tags) { tags[id].remove(); delete tags[id]; }
             for (const id in plates) { plates[id].remove(); delete plates[id]; }
         }
@@ -225,6 +220,6 @@ window.addEventListener('message', (e) => {
     if (d.action === 'players') {
         renderPlayers(d.players || []);
     } else if (d.action === 'vehicles') {
-        renderVehicles(d.vehicles || [], d.brand, d.server);
+        renderVehicles(d.vehicles || [], d.region);
     }
 });

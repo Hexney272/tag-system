@@ -1,9 +1,5 @@
 Config = {}
 
--- Branding (a rendszámtáblán jelenik meg)
-Config.Brand = "RealRP"
-Config.ServerName = "RealRP szerepjáték szerver"
-
 -- Távolságok (méterben)
 Config.PlayerDistance = 30.0   -- meddig látszanak a játékos-tagek
 Config.VehicleDistance = 40.0  -- meddig látszanak a rendszámtáblák
@@ -16,13 +12,16 @@ Config.VehicleOffset = 1.5         -- rendszámtábla magassága a jármű föl�
 -- Halott időzítő (másodperc) - EMS respawn timer alapérték
 Config.DeathTimer = 600 -- 10 perc
 
+-- ============ RENDSZÁMTÁBLA ============
+-- A táblán felül megjelenő régió/állam felirat (a kép szerinti modern kinézethez)
+Config.Plate = {
+    Region = "RealCity",
+}
+
 -- ============ RENDSZÁMTÁBLA LÁTHATÓSÁG ============
 -- Csak a játékosok által BIRTOKOLT autók felett jelenjen meg a rendszám.
 -- "occupied": minden olyan jármű, amelyben épp valódi játékos ül (vezető vagy utas)
 -- "owned":    csak az Entity(veh).state.ownedVehicle == true jelzéssel ellátott járművek
---             (ezt a saját garázs/ownership szkripted állítja be a parkoló autókon is)
--- A kettő kombinálható: ha PlateShowOccupied = true ÉS PlateShowOwned = true,
--- akkor mindkét feltétel külön-külön elég a megjelenéshez.
 Config.PlateShowOccupied = true   -- játékos által vezetett/utazott autók
 Config.PlateShowOwned    = true   -- ownedVehicle statebaggel jelölt (parkoló) autók
 Config.PlateShowOwnVehicle = false -- a SAJÁT autód rendszáma is látszódjon-e
@@ -41,13 +40,23 @@ Config.States = {
 
 -- Ikon megjelenítési kapcsolók
 Config.Icons = {
-    mic      = true,   -- mikrofon (mindig látszik, zöld ha beszél)
+    mic      = true,   -- mikrofon (CSAK beszéd közben, zölden)
     radio    = true,   -- rádió (ha rádión beszél)
     phone    = true,   -- telefon (ha telefon van a kézben)
     armour   = true,   -- páncél (ha van)
-    weapon   = true,   -- fegyver (ha kint van)
+    weapon   = true,   -- fegyver (ha kint van, gyalog)
     cuffed   = true,   -- bilincs
     seatbelt = true,   -- biztonsági öv (csak járműben)
+}
+
+-- ============ BEÉPÍTETT BIZTONSÁGI ÖV ============
+-- builtIn = true  -> a B gomb be/kikapcsolja az övet, és vezérli az ikont (zöld = bekötve)
+-- builtIn = false -> kapcsold ki, ha saját öv-szkripted van; hívd a SetSeatbelt exportot
+Config.Seatbelt = {
+    builtIn = true,
+    key = 'B',
+    antiEject = false,     -- true esetén bekötetlenül kirepülsz erős ütközésnél
+    ejectThreshold = 18.0, -- sebesség-esés (m/s), ami fölött kirepül (ha antiEject)
 }
 
 -- A saját karakteren automatikusan felismerje-e a telefont prop alapján,
@@ -55,7 +64,6 @@ Config.Icons = {
 Config.AutoDetectPhone = false
 
 -- Ha nincs beállítva karakternév statebag, essünk vissza a FiveM-fiók nevére?
--- false esetén ilyenkor egyáltalán nem írunk nevet (csak a karakternevet fogadjuk el).
 Config.FallbackToCfxName = false
 
 -- ============ ESX LEGACY INTEGRÁCIÓ ============
@@ -77,25 +85,18 @@ Config.ESX = {
     -- false   -> nincs jelvényszám
     BadgeSource = "meta",
     BadgeMetaKey = "badge",
-
-    -- oxmysql lekérdezés, ha BadgeSource = "query".
-    -- A ? helyére az identifier kerül; az első oszlop értéke lesz a jelvényszám.
     BadgeQuery = "SELECT badge FROM users WHERE identifier = ?",
 
     -- AUTOMATIKUS jelvényszám kiosztás (mivel jelenleg nincsenek jelvényszámok).
-    -- Ha true és a játékosnak még nincs jelvénye, kap egy egyedi, sorszámozott számot.
-    -- A számokat a 'tag_system_badges' oxmysql tábla tárolja (automatikusan létrejön),
-    -- és a gyors eléréshez az ESX metadatába is bekerül.
     AutoBadge = true,
     BadgeStart = 1000,   -- az első kiosztott jelvényszám
-    -- mely job-ok kapjanak automatikus jelvényt (alapból a duty-köteles mind)
     AutoBadgeJobs = { police = true, ambulance = true, mechanic = true },
 
     -- A /duty parancs engedélyezése a duty-köteles job-oknál
     EnableDutyCommand = true,
 }
 
--- Színek (a CSS-ben is ezek vannak, itt referenciaként)
+-- Színek (referenciaként)
 Config.Colors = {
     name  = "#FFFFFF",
     id    = "#BDBDBD",

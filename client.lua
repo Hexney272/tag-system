@@ -19,8 +19,6 @@ local debugState = {
 }
 
 -- ============ ELREJTÉS (ESC / inventory / bármilyen NUI fókusz) ============
--- Ha a pause menü (ESC) nyitva van, vagy egy másik resource NUI-ja fókuszt kapott
--- (pl. inventory, telefon, menük), akkor elrejtjük a tageket és rendszámokat.
 local overlayHidden = false
 
 CreateThread(function()
@@ -32,7 +30,6 @@ CreateThread(function()
             lastHidden = overlayHidden
             SendNUIMessage({ action = "visibility", visible = not overlayHidden })
             if overlayHidden then
-                -- azonnal ürítsük is, hogy semmi ne "ragadjon be"
                 SendNUIMessage({ action = "players", players = {} })
                 SendNUIMessage({ action = "vehicles", vehicles = {} })
             end
@@ -59,7 +56,6 @@ CreateThread(function()
                 local dist = #(coords - myCoords)
 
                 if dist <= Config.PlayerDistance then
-                    -- saját magunkra nincs értelme fal-ellenőrzést futtatni
                     local visible = isSelf or (not Config.RequireLineOfSight)
                         or HasEntityClearLosToEntity(myPed, ped, 17)
 
@@ -71,15 +67,12 @@ CreateThread(function()
                             local serverId = GetPlayerServerId(player)
                             local st = Player(serverId).state
 
-                            -- távolság alapú skála (közelebb = nagyobb)
                             local scale = 1.0 - (dist / Config.PlayerDistance) * 0.55
                             if scale < 0.45 then scale = 0.45 end
 
                             local job = st[Config.States.job]
                             local cuffed = st[Config.States.cuffed] or false
                             local deathTime = st[Config.States.dead] or 0
-
-                            -- KARAKTERNÉV a statebag-ből (nem a CFX/fiók név)
                             local charName = st[Config.States.name]
 
                             -- debug felülírások a saját karakterre
@@ -90,7 +83,6 @@ CreateThread(function()
                                 if debugState.deathTime > 0 then deathTime = debugState.deathTime end
                             end
 
-                            -- ha nincs karakternév statebag, opcionálisan a CFX név
                             if not charName then
                                 if Config.FallbackToCfxName then
                                     charName = GetPlayerName(player)
@@ -99,10 +91,10 @@ CreateThread(function()
                                 end
                             end
 
-                            -- frakció + rang CSAK ha a játékos dutyban van
                             local showJob = job and job.label and job.onDuty == true
 
                             local inVehicle = IsPedInAnyVehicle(ped, false)
+                            local talking = NetworkIsPlayerTalking(player)
 
                             local radio    = st[Config.States.radio] or false
                             local phone    = st[Config.States.phone] or false
@@ -117,13 +109,13 @@ CreateThread(function()
                             players[#players+1] = {
                                 serverId = serverId,
                                 name     = charName,
-                                -- mikrofon mindig látszik (ha engedélyezve), zöld ha beszél
-                                mic      = Config.Icons.mic,
-                                talking  = NetworkIsPlayerTalking(player),
+                                -- mikrofon CSAK beszéd közben (mindig zölden)
+                                mic      = Config.Icons.mic and talking or false,
                                 radio    = Config.Icons.radio and radio or false,
                                 phone    = Config.Icons.phone and phone or false,
                                 armour   = Config.Icons.armour and (GetPedArmour(ped) > 0) or false,
-                                weapon   = Config.Icons.weapon and (not isUnarmed(ped)) or false,
+                                -- fegyver ikon NEM látszik járműben (csak gyalog)
+                                weapon   = Config.Icons.weapon and (not isUnarmed(ped)) and (not inVehicle) or false,
                                 cuffed   = Config.Icons.cuffed and cuffed or false,
                                 -- öv csak járműben jelenik meg
                                 seatbeltShow = Config.Icons.seatbelt and inVehicle or false,
@@ -157,8 +149,6 @@ RegisterCommand('tagcuff', function()
     print(('[tag-system] Bilincs (teszt): %s'):format(debugState.cuffed and 'BE' or 'KI'))
 end, false)
 
--- /tagjob "Sheriff's Office" 1022 Trainee
--- /tagname Brian Doung   -> karakternév szimuláció
 RegisterCommand('tagname', function(_, args)
     if #args == 0 then
         debugState.name = nil
@@ -185,14 +175,12 @@ RegisterCommand('tagjob', function(_, args)
     print('[tag-system] Job kijelzes beallitva (onDuty = true)')
 end, false)
 
--- /tagdead [masodperc]  (alap: Config.DeathTimer)
 RegisterCommand('tagdead', function(_, args)
     local secs = tonumber(args[1]) or Config.DeathTimer
     debugState.deathTime = GetCloudTimeAsInt() + secs
     print(('[tag-system] Halott-idozito (teszt): %d mp'):format(secs))
 end, false)
 
--- minden teszt-allapot torlese
 RegisterCommand('tagclear', function()
     debugState.name = nil
     debugState.cuffed = false
@@ -204,7 +192,6 @@ RegisterCommand('tagclear', function()
     print('[tag-system] Teszt allapotok torolve')
 end, false)
 
--- ikon teszt parancsok
 RegisterCommand('tagradio', function()
     debugState.radio = not debugState.radio
     print(('[tag-system] Radio ikon (teszt): %s'):format(debugState.radio and 'BE' or 'KI'))
@@ -215,9 +202,7 @@ RegisterCommand('tagphone', function()
     print(('[tag-system] Telefon ikon (teszt): %s'):format(debugState.phone and 'BE' or 'KI'))
 end, false)
 
--- /tagseat        -> becsatolva (zold)
--- /tagseat off    -> kicsatolva (feher)
--- /tagseat clear  -> nincs feluliras
+-- /tagseat | /tagseat off | /tagseat clear
 RegisterCommand('tagseat', function(_, args)
     local a = args[1]
     if a == 'clear' then
@@ -232,26 +217,22 @@ RegisterCommand('tagseat', function(_, args)
     end
 end, false)
 
--- gyors fegyver + pancel a teszteléshez
 RegisterCommand('taggear', function()
     local ped = PlayerPedId()
     GiveWeaponToPed(ped, `WEAPON_PISTOL`, 250, false, true)
     SetPedArmour(ped, 100)
-    print('[tag-system] Pisztoly + pancel kiosztva (fegyver/pancel ikon teszt)')
+    print('[tag-system] Pisztoly + pancel kiosztva')
 end, false)
 
--- saját autó rendszámának megjelenítése (teszt)
 RegisterCommand('tagplate', function()
     debugState.showOwnVehicle = not debugState.showOwnVehicle
     print(('[tag-system] Sajat auto rendszam (teszt): %s'):format(debugState.showOwnVehicle and 'BE' or 'KI'))
 end, false)
 
 -- ============ JÁRMŰ RENDSZÁMTÁBLÁK ============
--- Csak a játékosok által birtokolt / vezetett autók felett jelenik meg.
 local function gatherOwnedVehicles(myVeh)
     local set = {}
 
-    -- 1) Játékosok által elfoglalt járművek
     if Config.PlateShowOccupied then
         for _, player in ipairs(GetActivePlayers()) do
             local ped = GetPlayerPed(player)
@@ -262,7 +243,6 @@ local function gatherOwnedVehicles(myVeh)
         end
     end
 
-    -- 2) ownedVehicle statebaggel jelölt (akár parkoló) autók a közelben
     if Config.PlateShowOwned then
         local handle, veh = FindFirstVehicle()
         local ok = true
@@ -275,7 +255,6 @@ local function gatherOwnedVehicles(myVeh)
         EndFindVehicle(handle)
     end
 
-    -- Saját autó kizárása, ha nem kérted (teszthez /tagplate-tel bekapcsolható)
     if not (Config.PlateShowOwnVehicle or debugState.showOwnVehicle) and myVeh and myVeh ~= 0 then
         set[myVeh] = nil
     end
@@ -319,8 +298,7 @@ CreateThread(function()
             SendNUIMessage({
                 action = "vehicles",
                 vehicles = vehicles,
-                brand = Config.Brand,
-                server = Config.ServerName
+                region = Config.Plate and Config.Plate.Region or "RealCity"
             })
         end
 
@@ -328,29 +306,23 @@ CreateThread(function()
     end
 end)
 
-
-
 -- ============ INTEGRÁCIÓK (saját karakter -> replikált statebag) ============
--- Ezek a SAJÁT játékosod statebagjeit állítják be, hogy a többiek lássák az ikonokat.
 
 -- PMA-voice: rádió ikon, amikor rádión beszélsz
 AddEventHandler('pma-voice:radioActive', function(talking)
     LocalPlayer.state:set(Config.States.radio, talking and true or false, true)
 end)
 
--- Kliens exportok más szkripteknek (öv- és telefon-rendszerek bekötéséhez)
--- pl. a seatbelt szkripted: exports['tag-system']:SetSeatbelt(true/false)
+-- Kliens exportok más szkripteknek (öv/telefon rendszerek bekötéséhez)
 exports('SetSeatbelt', function(value)
     LocalPlayer.state:set(Config.States.seatbelt, value and true or false, true)
 end)
 
--- pl. a telefon szkripted: exports['tag-system']:SetUsingPhone(true/false)
 exports('SetUsingPhone', function(value)
     LocalPlayer.state:set(Config.States.phone, value and true or false, true)
 end)
 
--- Opcionális: telefon automatikus felismerése a saját karakteren (prop alapján),
--- ha a telefon szkriptednek nincs külön jelzése. Kapcsold be a configból, ha kell.
+-- Opcionális: telefon automatikus felismerése a saját karakteren (prop alapján)
 if Config.AutoDetectPhone then
     local phoneProps = {
         [`prop_amb_phone`] = true,
@@ -375,6 +347,59 @@ if Config.AutoDetectPhone then
                 LocalPlayer.state:set(Config.States.phone, using, true)
             end
             Wait(500)
+        end
+    end)
+end
+
+-- ============ BEÉPÍTETT BIZTONSÁGI ÖV (B gomb) ============
+-- Az ikont vezérli: bekötve = zöld. Ha saját öv-szkripted van, állítsd
+-- Config.Seatbelt.builtIn = false-ra, és hívd a SetSeatbelt exportot.
+if Config.Seatbelt and Config.Seatbelt.builtIn then
+    local belted = false
+
+    local function setBelt(state)
+        belted = state and true or false
+        LocalPlayer.state:set(Config.States.seatbelt, belted, true)
+    end
+
+    RegisterCommand('+rrp_seatbelt', function()
+        local ped = PlayerPedId()
+        if not IsPedInAnyVehicle(ped, false) then return end
+        setBelt(not belted)
+        PlaySoundFrontend(-1, belted and 'SELECT' or 'BACK', 'HUD_FRONTEND_DEFAULT_SOUNDSET', true)
+    end, false)
+
+    RegisterKeyMapping('+rrp_seatbelt', 'Biztonsági öv be/ki', 'keyboard', Config.Seatbelt.key or 'B')
+
+    -- öv visszaállítása kiszálláskor + opcionális kirepülés-védelem
+    CreateThread(function()
+        local lastSpeed = 0.0
+        while true do
+            local ped = PlayerPedId()
+            local sleep = 500
+
+            if IsPedInAnyVehicle(ped, false) then
+                local veh = GetVehiclePedIsIn(ped, false)
+                sleep = 0
+                local speed = GetEntitySpeed(veh)
+
+                if Config.Seatbelt.antiEject and not belted then
+                    -- ha NINCS bekötve és nagy a lassulás -> kirepülés
+                    if (lastSpeed - speed) > (Config.Seatbelt.ejectThreshold or 18.0) then
+                        local coords = GetEntityCoords(ped)
+                        SetEntityCoords(ped, coords.x, coords.y, coords.z - 0.47, true, true, true, false)
+                        SetEntityVelocity(ped, GetEntityVelocity(veh))
+                        TaskOpenVehicleDoor(ped, veh, 9999, -1, 0.0)
+                        SetPedToRagdoll(ped, 1000, 1000, 0, false, false, false)
+                    end
+                end
+                lastSpeed = speed
+            else
+                if belted then setBelt(false) end
+                lastSpeed = 0.0
+            end
+
+            Wait(sleep)
         end
     end)
 end

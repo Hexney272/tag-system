@@ -1,13 +1,59 @@
 const playersEl  = document.getElementById('players');
 const vehiclesEl = document.getElementById('vehicles');
 
-// ====== Inline SVG ikonok (offline, élesek minden felbontáson) ======
-// FA6 stílusú formák: microphone-lines, handcuffs, shield-halved, gun, medical cross
+// ====== Inline SVG ikonok (a felhasználó által megadott kártya-stílus) ======
+const BG_WHITE = { fill: '#ECECEC', stroke: '#B8B8B8' };
+const BG_GREEN = { fill: '#CFE4CF', stroke: '#9BB79B' };
+
+function card(bg, inner) {
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">`
+        + `<rect x="4" y="4" width="120" height="120" rx="12" fill="${bg.fill}" stroke="${bg.stroke}" stroke-width="2"/>`
+        + inner + `</svg>`;
+}
+
 const ICONS = {
-    voice:  `<svg viewBox="0 0 384 512"><path d="M192 0C139 0 96 43 96 96v160c0 53 43 96 96 96s96-43 96-96V96c0-53-43-96-96-96zm-16 88a16 16 0 0 1 32 0 16 16 0 0 1-32 0zm0 80a16 16 0 0 1 32 0 16 16 0 0 1-32 0zm-128 88c0-13 11-24 24-24s24 11 24 24a96 96 0 0 0 192 0c0-13 11-24 24-24s24 11 24 24a144 144 0 0 1-120 142v34h48a24 24 0 0 1 0 48H120a24 24 0 0 1 0-48h48v-34A144 144 0 0 1 48 256z"/></svg>`,
-    armour: `<svg viewBox="0 0 512 512"><path d="M256 0c-4 0-8 1-12 3L54 84c-13 6-22 19-22 33 0 154 90 264 202 311 4 2 8 3 12 3V0z" opacity=".95"/><path d="M256 0c4 0 8 1 12 3l190 81c13 6 22 19 22 33 0 154-90 264-202 311-4 2-8 3-12 3V0z" opacity=".75"/></svg>`,
-    weapon: `<svg viewBox="0 0 640 512"><path d="M96 96c-18 0-32 14-32 32v32H32a32 32 0 0 0 0 64h32v32c0 18 14 32 32 32h48l40 56c6 8 15 12 25 12h53c12 0 23-7 28-18l18-38h156a48 48 0 0 0 48-48v-48a48 48 0 0 0-48-48H160v-28c0-18-14-32-32-32H96zm48 192h64l-26 48h-22l-16-22v-26z"/></svg>`,
-    cuffed: `<svg viewBox="0 0 640 512"><path d="M176 96a112 112 0 1 0 0 224 112 112 0 0 0 0-224zm0 64a48 48 0 1 1 0 96 48 48 0 0 1 0-96zM464 96a112 112 0 1 0 0 224 112 112 0 0 0 0-224zm0 64a48 48 0 1 1 0 96 48 48 0 0 1 0-96zM240 200h160v32H240z"/></svg>`,
+    // mikrofon: fehér alapból, zöld ha beszél
+    mic(active) {
+        return card(active ? BG_GREEN : BG_WHITE,
+            `<rect x="44" y="22" width="40" height="54" rx="20" fill="none" stroke="#2A2A2A" stroke-width="4"/>`
+          + `<path d="M38 66 C38 88 52 98 64 98 C76 98 90 88 90 66" fill="none" stroke="#2A2A2A" stroke-width="4" stroke-linecap="round"/>`
+          + `<line x1="64" y1="98" x2="64" y2="112" stroke="#2A2A2A" stroke-width="4"/>`
+          + `<line x1="48" y1="112" x2="80" y2="112" stroke="#2A2A2A" stroke-width="4" stroke-linecap="round"/>`);
+    },
+    radio: card(BG_WHITE,
+        `<rect x="38" y="28" width="52" height="72" rx="6" fill="none" stroke="#2A2A2A" stroke-width="4"/>`
+      + `<circle cx="64" cy="50" r="10" fill="none" stroke="#2A2A2A" stroke-width="3"/>`
+      + `<line x1="80" y1="28" x2="92" y2="12" stroke="#2A2A2A" stroke-width="4"/>`
+      + `<line x1="50" y1="74" x2="78" y2="74" stroke="#2A2A2A" stroke-width="3"/>`
+      + `<line x1="50" y1="84" x2="78" y2="84" stroke="#2A2A2A" stroke-width="3"/>`),
+    phone: card(BG_WHITE,
+        `<rect x="42" y="18" width="44" height="92" rx="8" fill="none" stroke="#2A2A2A" stroke-width="4"/>`
+      + `<circle cx="64" cy="94" r="4" fill="#2A2A2A"/>`
+      + `<rect x="50" y="28" width="28" height="50" fill="none" stroke="#2A2A2A" stroke-width="2"/>`),
+    armour: card(BG_WHITE,
+        `<path d="M44 22 H84 C84 38 88 48 98 56 V96 H30 V56 C40 48 44 38 44 22Z" fill="none" stroke="#2A2A2A" stroke-width="4"/>`
+      + `<rect x="40" y="54" width="16" height="8" fill="none" stroke="#2A2A2A" stroke-width="2"/>`
+      + `<rect x="72" y="54" width="16" height="8" fill="none" stroke="#2A2A2A" stroke-width="2"/>`
+      + `<rect x="40" y="72" width="16" height="8" fill="none" stroke="#2A2A2A" stroke-width="2"/>`
+      + `<rect x="72" y="72" width="16" height="8" fill="none" stroke="#2A2A2A" stroke-width="2"/>`
+      + `<rect x="58" y="50" width="12" height="34" fill="none" stroke="#2A2A2A" stroke-width="2"/>`),
+    // biztonsági öv: fehér = nincs becsatolva, zöld = becsatolva
+    seatbelt(buckled) {
+        return card(buckled ? BG_GREEN : BG_WHITE,
+            `<circle cx="64" cy="34" r="12" fill="none" stroke="#2A2A2A" stroke-width="4"/>`
+          + `<path d="M42 60 C42 50 50 46 64 46 C78 46 86 50 86 60 V92 H42 Z" fill="none" stroke="#2A2A2A" stroke-width="4"/>`
+          + `<path d="M42 54 L82 98" stroke="#2A2A2A" stroke-width="10" stroke-linecap="round"/>`
+          + `<rect x="70" y="82" width="14" height="10" rx="2" fill="${buckled ? '#CFE4CF' : '#ECECEC'}" stroke="#2A2A2A" stroke-width="3"/>`);
+    },
+    // fegyver és bilincs ugyanabban a kártya-stílusban
+    weapon: card(BG_WHITE,
+        `<path d="M26 46 H92 V60 H74 L64 76 H50 L44 60 H26 Z" fill="none" stroke="#2A2A2A" stroke-width="4" stroke-linejoin="round"/>`
+      + `<rect x="50" y="60" width="14" height="20" fill="none" stroke="#2A2A2A" stroke-width="3"/>`),
+    cuffed: card(BG_WHITE,
+        `<circle cx="44" cy="80" r="20" fill="none" stroke="#2A2A2A" stroke-width="5"/>`
+      + `<circle cx="84" cy="80" r="20" fill="none" stroke="#2A2A2A" stroke-width="5"/>`
+      + `<path d="M58 64 Q64 54 70 64" fill="none" stroke="#2A2A2A" stroke-width="5" stroke-linecap="round"/>`),
+    // halott-időzítő piros keresztje (külön, CSS színezi)
     cross:  `<svg viewBox="0 0 448 512"><path d="M160 32c-18 0-32 14-32 32v64H64c-18 0-32 14-32 32v96c0 18 14 32 32 32h64v128c0 18 14 32 32 32h128c18 0 32-14 32-32V320h64c18 0 32-14 32-32v-96c0-18-14-32-32-32h-64V64c0-18-14-32-32-32H160z"/></svg>`
 };
 
@@ -97,10 +143,18 @@ function renderPlayers(list) {
 
             // ikonok (a név jobb oldalán)
             const icons = [];
-            if (p.talking) icons.push(`<span class="icon voice">${ICONS.voice}</span>`);
-            if (p.cuffed)  icons.push(`<span class="icon cuffed">${ICONS.cuffed}</span>`);
-            if (p.armour)  icons.push(`<span class="icon armour">${ICONS.armour}</span>`);
-            if (p.weapon)  icons.push(`<span class="icon weapon">${ICONS.weapon}</span>`);
+            // mic mindig látszik: fehér, zöld ha beszél
+            if (p.mic) {
+                icons.push(`<span class="icon mic${p.talking ? ' talking' : ''}">${ICONS.mic(p.talking)}</span>`);
+            }
+            if (p.radio)  icons.push(`<span class="icon">${ICONS.radio}</span>`);
+            if (p.phone)  icons.push(`<span class="icon">${ICONS.phone}</span>`);
+            if (p.armour) icons.push(`<span class="icon">${ICONS.armour}</span>`);
+            if (p.weapon) icons.push(`<span class="icon">${ICONS.weapon}</span>`);
+            if (p.cuffed) icons.push(`<span class="icon">${ICONS.cuffed}</span>`);
+            // öv csak járműben (fehér = nincs, zöld = becsatolva)
+            if (p.seatbeltShow) icons.push(`<span class="icon">${ICONS.seatbelt(p.seatbelt)}</span>`);
+
             const joined = icons.join('');
             const iconsEl = el.querySelector('.icons');
             if (el._cache.icons !== joined) {

@@ -13,6 +13,9 @@ local debugState = {
     job      = nil,     -- /tagjob   -> frakció/rang sor (onDuty-val)
     deathTime = 0,      -- /tagdead  -> halott-időzítő
     showOwnVehicle = false, -- /tagplate -> saját autó rendszáma
+    radio    = false,   -- /tagradio
+    phone    = false,   -- /tagphone
+    seatbelt = nil,     -- /tagseat  (nil = nincs felülírás)
 }
 
 -- ============ ELREJTÉS (ESC / inventory / bármilyen NUI fókusz) ============
@@ -99,13 +102,32 @@ CreateThread(function()
                             -- frakció + rang CSAK ha a játékos dutyban van
                             local showJob = job and job.label and job.onDuty == true
 
+                            local inVehicle = IsPedInAnyVehicle(ped, false)
+
+                            local radio    = st[Config.States.radio] or false
+                            local phone    = st[Config.States.phone] or false
+                            local seatbelt = st[Config.States.seatbelt] or false
+
+                            if isSelf then
+                                if debugState.radio then radio = true end
+                                if debugState.phone then phone = true end
+                                if debugState.seatbelt ~= nil then seatbelt = debugState.seatbelt end
+                            end
+
                             players[#players+1] = {
                                 serverId = serverId,
                                 name     = charName,
+                                -- mikrofon mindig látszik (ha engedélyezve), zöld ha beszél
+                                mic      = Config.Icons.mic,
                                 talking  = NetworkIsPlayerTalking(player),
-                                armour   = GetPedArmour(ped) > 0,
-                                weapon   = not isUnarmed(ped),
-                                cuffed   = cuffed,
+                                radio    = Config.Icons.radio and radio or false,
+                                phone    = Config.Icons.phone and phone or false,
+                                armour   = Config.Icons.armour and (GetPedArmour(ped) > 0) or false,
+                                weapon   = Config.Icons.weapon and (not isUnarmed(ped)) or false,
+                                cuffed   = Config.Icons.cuffed and cuffed or false,
+                                -- öv csak járműben jelenik meg
+                                seatbeltShow = Config.Icons.seatbelt and inVehicle or false,
+                                seatbelt = seatbelt,
                                 dead     = IsPedDeadOrDying(ped, true) or (deathTime > 0),
                                 deathRemaining = deathTime > 0 and math.max(0, deathTime - GetCloudTimeAsInt()) or 0,
                                 job      = showJob and job or nil,
@@ -176,7 +198,38 @@ RegisterCommand('tagclear', function()
     debugState.cuffed = false
     debugState.job = nil
     debugState.deathTime = 0
+    debugState.radio = false
+    debugState.phone = false
+    debugState.seatbelt = nil
     print('[tag-system] Teszt allapotok torolve')
+end, false)
+
+-- ikon teszt parancsok
+RegisterCommand('tagradio', function()
+    debugState.radio = not debugState.radio
+    print(('[tag-system] Radio ikon (teszt): %s'):format(debugState.radio and 'BE' or 'KI'))
+end, false)
+
+RegisterCommand('tagphone', function()
+    debugState.phone = not debugState.phone
+    print(('[tag-system] Telefon ikon (teszt): %s'):format(debugState.phone and 'BE' or 'KI'))
+end, false)
+
+-- /tagseat        -> becsatolva (zold)
+-- /tagseat off    -> kicsatolva (feher)
+-- /tagseat clear  -> nincs feluliras
+RegisterCommand('tagseat', function(_, args)
+    local a = args[1]
+    if a == 'clear' then
+        debugState.seatbelt = nil
+        print('[tag-system] Ov feluliras torolve')
+    elseif a == 'off' then
+        debugState.seatbelt = false
+        print('[tag-system] Ov (teszt): KICSATOLVA (feher)')
+    else
+        debugState.seatbelt = true
+        print('[tag-system] Ov (teszt): BECSATOLVA (zold)')
+    end
 end, false)
 
 -- gyors fegyver + pancel a teszteléshez
@@ -274,3 +327,54 @@ CreateThread(function()
         Wait(overlayHidden and 250 or 0)
     end
 end)
+
+
+
+-- ============ INTEGRÁCIÓK (saját karakter -> replikált statebag) ============
+-- Ezek a SAJÁT játékosod statebagjeit állítják be, hogy a többiek lássák az ikonokat.
+
+-- PMA-voice: rádió ikon, amikor rádión beszélsz
+AddEventHandler('pma-voice:radioActive', function(talking)
+    LocalPlayer.state:set(Config.States.radio, talking and true or false, true)
+end)
+
+-- Kliens exportok más szkripteknek (öv- és telefon-rendszerek bekötéséhez)
+-- pl. a seatbelt szkripted: exports['tag-system']:SetSeatbelt(true/false)
+exports('SetSeatbelt', function(value)
+    LocalPlayer.state:set(Config.States.seatbelt, value and true or false, true)
+end)
+
+-- pl. a telefon szkripted: exports['tag-system']:SetUsingPhone(true/false)
+exports('SetUsingPhone', function(value)
+    LocalPlayer.state:set(Config.States.phone, value and true or false, true)
+end)
+
+-- Opcionális: telefon automatikus felismerése a saját karakteren (prop alapján),
+-- ha a telefon szkriptednek nincs külön jelzése. Kapcsold be a configból, ha kell.
+if Config.AutoDetectPhone then
+    local phoneProps = {
+        [`prop_amb_phone`] = true,
+        [`prop_npc_phone`] = true,
+        [`prop_npc_phone_02`] = true,
+        [`p_amb_phone_01`] = true,
+    }
+    CreateThread(function()
+        local last = false
+        while true do
+            local ped = PlayerPedId()
+            local using = false
+            for model, _ in pairs(phoneProps) do
+                local obj = GetClosestObjectOfType(GetEntityCoords(ped), 1.0, model, false, false, false)
+                if obj ~= 0 and IsEntityAttachedToEntity(obj, ped) then
+                    using = true
+                    break
+                end
+            end
+            if using ~= last then
+                last = using
+                LocalPlayer.state:set(Config.States.phone, using, true)
+            end
+            Wait(500)
+        end
+    end)
+end

@@ -29,12 +29,30 @@ Config.PlateShowOwnVehicle = false -- a SAJÁT autód rendszáma is látszódjon
 
 -- Statebag kulcsok (más szkriptek ezeket állítják be)
 Config.States = {
-    name   = "charName",       -- Player(id).state.charName -> "Brian Doung" (karakternév)
-    cuffed = "isCuffed",       -- Player(id).state.isCuffed
-    job    = "tagJob",         -- { label, badge, grade, onDuty }
-    dead   = "deathTime",      -- unix timestamp (mp), amikor a respawn lejár; 0 = él
-    owned  = "ownedVehicle",   -- Entity(veh).state.ownedVehicle == true (játékos tulajdona)
+    name     = "charName",     -- Player(id).state.charName -> "Brian Doung" (karakternév)
+    cuffed   = "isCuffed",     -- Player(id).state.isCuffed
+    job      = "tagJob",       -- { label, badge, grade, onDuty }
+    dead     = "deathTime",    -- unix timestamp (mp), amikor a respawn lejár; 0 = él
+    owned    = "ownedVehicle", -- Entity(veh).state.ownedVehicle == true (játékos tulajdona)
+    radio    = "onRadio",      -- Player(id).state.onRadio   -> rádión beszél (bool)
+    phone    = "usingPhone",   -- Player(id).state.usingPhone -> telefon a kézben (bool)
+    seatbelt = "seatbelt",     -- Player(id).state.seatbelt  -> bekötött öv (bool)
 }
+
+-- Ikon megjelenítési kapcsolók
+Config.Icons = {
+    mic      = true,   -- mikrofon (mindig látszik, zöld ha beszél)
+    radio    = true,   -- rádió (ha rádión beszél)
+    phone    = true,   -- telefon (ha telefon van a kézben)
+    armour   = true,   -- páncél (ha van)
+    weapon   = true,   -- fegyver (ha kint van)
+    cuffed   = true,   -- bilincs
+    seatbelt = true,   -- biztonsági öv (csak járműben)
+}
+
+-- A saját karakteren automatikusan felismerje-e a telefont prop alapján,
+-- ha a telefon szkripted nem hívja a SetUsingPhone exportot. (true = bekapcsol)
+Config.AutoDetectPhone = false
 
 -- Ha nincs beállítva karakternév statebag, essünk vissza a FiveM-fiók nevére?
 -- false esetén ilyenkor egyáltalán nem írunk nevet (csak a karakternevet fogadjuk el).

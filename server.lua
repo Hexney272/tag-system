@@ -32,6 +32,16 @@ exports('SetJob', SetJob)
 exports('SetDead', SetDead)
 exports('ClearDead', ClearDead)
 
+-- Jármű "játékos tulajdona" jelölése (parkoló autók rendszáma is megjelenik)
+-- pl. exports['tag-system']:SetVehicleOwned(vehicleNetId, true)
+local function SetVehicleOwned(vehNetId, value)
+    local ent = NetworkGetEntityFromNetworkId(vehNetId)
+    if ent and ent ~= 0 then
+        Entity(ent).state:set(Config.States.owned, value and true or false, true)
+    end
+end
+exports('SetVehicleOwned', SetVehicleOwned)
+
 -- Alapértékek beállítása csatlakozáskor
 AddEventHandler('playerJoining', function()
     local src = source

@@ -16,11 +16,23 @@ Config.VehicleOffset = 1.5         -- rendszámtábla magassága a jármű föl�
 -- Halott időzítő (másodperc) - EMS respawn timer alapérték
 Config.DeathTimer = 600 -- 10 perc
 
--- Statebag kulcsok (más szkriptek ezeket állítják be a játékosokon)
+-- ============ RENDSZÁMTÁBLA LÁTHATÓSÁG ============
+-- Csak a játékosok által BIRTOKOLT autók felett jelenjen meg a rendszám.
+-- "occupied": minden olyan jármű, amelyben épp valódi játékos ül (vezető vagy utas)
+-- "owned":    csak az Entity(veh).state.ownedVehicle == true jelzéssel ellátott járművek
+--             (ezt a saját garázs/ownership szkripted állítja be a parkoló autókon is)
+-- A kettő kombinálható: ha PlateShowOccupied = true ÉS PlateShowOwned = true,
+-- akkor mindkét feltétel külön-külön elég a megjelenéshez.
+Config.PlateShowOccupied = true   -- játékos által vezetett/utazott autók
+Config.PlateShowOwned    = true   -- ownedVehicle statebaggel jelölt (parkoló) autók
+Config.PlateShowOwnVehicle = false -- a SAJÁT autód rendszáma is látszódjon-e
+
+-- Statebag kulcsok (más szkriptek ezeket állítják be)
 Config.States = {
-    cuffed = "isCuffed",   -- Player(id).state.isCuffed
-    job    = "tagJob",     -- { label = "Sheriff's Office", badge = 1022, grade = "Trainee" }
-    dead   = "deathTime",  -- unix timestamp (mp), amikor a respawn lejár; 0 = él
+    cuffed = "isCuffed",       -- Player(id).state.isCuffed
+    job    = "tagJob",         -- { label = "Sheriff's Office", badge = 1022, grade = "Trainee" }
+    dead   = "deathTime",      -- unix timestamp (mp), amikor a respawn lejár; 0 = él
+    owned  = "ownedVehicle",   -- Entity(veh).state.ownedVehicle == true (játékos tulajdona)
 }
 
 -- Színek (a CSS-ben is ezek vannak, itt referenciaként)

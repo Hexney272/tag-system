@@ -7,35 +7,32 @@ Config.VehicleDistance = 40.0  -- meddig látszanak a rendszámtáblák
 -- Láthatóság
 Config.RequireLineOfSight = true   -- HasEntityClearLosToEntity ellenőrzés
 Config.HeadOffset = 1.05           -- tag magassága a fej fölött
-Config.VehicleOffset = 1.5         -- rendszámtábla magassága a jármű fölött
+Config.VehicleOffset = 0.65        -- rendszámtábla magassága a jármű teteje fölött
+                                   -- (kisebb = lejjebb a képernyőn)
 
 -- Halott időzítő (másodperc) - EMS respawn timer alapérték
 Config.DeathTimer = 600 -- 10 perc
 
 -- ============ RENDSZÁMTÁBLA ============
--- A táblán felül megjelenő régió/állam felirat (a kép szerinti modern kinézethez)
 Config.Plate = {
-    Region = "RealCity",
+    Region = "RealCity",   -- a tábla felső sávjában megjelenő régió-felirat
 }
 
 -- ============ RENDSZÁMTÁBLA LÁTHATÓSÁG ============
--- Csak a játékosok által BIRTOKOLT autók felett jelenjen meg a rendszám.
--- "occupied": minden olyan jármű, amelyben épp valódi játékos ül (vezető vagy utas)
--- "owned":    csak az Entity(veh).state.ownedVehicle == true jelzéssel ellátott járművek
-Config.PlateShowOccupied = true   -- játékos által vezetett/utazott autók
-Config.PlateShowOwned    = true   -- ownedVehicle statebaggel jelölt (parkoló) autók
+Config.PlateShowOccupied = true    -- játékos által vezetett/utazott autók
+Config.PlateShowOwned    = true    -- ownedVehicle statebaggel jelölt (parkoló) autók
 Config.PlateShowOwnVehicle = false -- a SAJÁT autód rendszáma is látszódjon-e
 
 -- Statebag kulcsok (más szkriptek ezeket állítják be)
 Config.States = {
-    name     = "charName",     -- Player(id).state.charName -> "Brian Doung" (karakternév)
-    cuffed   = "isCuffed",     -- Player(id).state.isCuffed
-    job      = "tagJob",       -- { label, badge, grade, onDuty }
-    dead     = "deathTime",    -- unix timestamp (mp), amikor a respawn lejár; 0 = él
-    owned    = "ownedVehicle", -- Entity(veh).state.ownedVehicle == true (játékos tulajdona)
-    radio    = "onRadio",      -- Player(id).state.onRadio   -> rádión beszél (bool)
-    phone    = "usingPhone",   -- Player(id).state.usingPhone -> telefon a kézben (bool)
-    seatbelt = "seatbelt",     -- Player(id).state.seatbelt  -> bekötött öv (bool)
+    name     = "charName",
+    cuffed   = "isCuffed",
+    job      = "tagJob",
+    dead     = "deathTime",
+    owned    = "ownedVehicle",
+    radio    = "onRadio",
+    phone    = "usingPhone",
+    seatbelt = "seatbelt",
 }
 
 -- Ikon megjelenítési kapcsolók
@@ -49,50 +46,43 @@ Config.Icons = {
     seatbelt = true,   -- biztonsági öv (csak járműben)
 }
 
--- ============ BEÉPÍTETT BIZTONSÁGI ÖV ============
--- builtIn = true  -> a B gomb be/kikapcsolja az övet, és vezérli az ikont (zöld = bekötve)
--- builtIn = false -> kapcsold ki, ha saját öv-szkripted van; hívd a SetSeatbelt exportot
+-- ============ BIZTONSÁGI ÖV ============
+-- Háromféleképp köthető be (a kliens mindhármat figyeli):
+--  A) Ha a szervered ESX öv-szkriptje eseményt küld (esx_seatbelt:Enable/Disable,
+--     seatbelt:toggle, stb.) -> automatikusan szinkronizál, semmit nem kell tenned.
+--  B) Ha SAJÁT statebagbe írja az övet (nem a fenti "seatbelt" kulcsba),
+--     add meg itt a kulcsot, és tükrözzük: externalStateKey = "az_o_kulcsuk".
+--  C) Ha nincs öv-rendszered, kapcsold be a beépített B-gombot: builtIn = true.
 Config.Seatbelt = {
-    builtIn = true,
-    key = 'B',
-    antiEject = false,     -- true esetén bekötetlenül kirepülsz erős ütközésnél
-    ejectThreshold = 18.0, -- sebesség-esés (m/s), ami fölött kirepül (ha antiEject)
+    builtIn = false,            -- állítsd true-ra, ha NINCS saját öv-rendszered
+    key = 'B',                  -- a beépített öv gombja (RegisterKeyMapping)
+    externalStateKey = nil,     -- pl. "seatbelt" vagy "seatbelton", ha más szkript írja
+    -- ESX Legacy alap öv-rendszere (esx_cruisecontrol) -> isSeatbeltOn() exportot olvassuk.
+    -- Ez a leggyakoribb eset; ha más a resource neve, írd át.
+    cruiseControlResource = 'esx_cruisecontrol',
 }
 
--- A saját karakteren automatikusan felismerje-e a telefont prop alapján,
--- ha a telefon szkripted nem hívja a SetUsingPhone exportot. (true = bekapcsol)
+-- Telefon automatikus felismerése prop alapján (ha a telefon-szkript nem hív exportot)
 Config.AutoDetectPhone = false
 
--- Ha nincs beállítva karakternév statebag, essünk vissza a FiveM-fiók nevére?
+-- Ha nincs karakternév statebag, essünk vissza a FiveM-fiók nevére?
 Config.FallbackToCfxName = false
 
 -- ============ ESX LEGACY INTEGRÁCIÓ ============
 Config.ESX = {
     enabled = true,
     sharedObject = 'es_extended',
-
-    -- Csak ezeknél a job-oknál jelenik meg a frakció-sor, és CSAK dutyban.
-    -- kulcs = ESX job neve (xPlayer.job.name), érték = a kijelzett label
     TaggedJobs = {
         police    = "Rendőrség",
         ambulance = "Mentőszolgálat",
         mechanic  = "Szerelő",
     },
-
-    -- Jelvényszám forrása:
-    -- "meta"  -> xPlayer.getMeta('badge')  (ESX Legacy metadata, users.metadata JSON-ban)
-    -- "query" -> oxmysql lekérdezés a BadgeQuery alapján
-    -- false   -> nincs jelvényszám
     BadgeSource = "meta",
     BadgeMetaKey = "badge",
     BadgeQuery = "SELECT badge FROM users WHERE identifier = ?",
-
-    -- AUTOMATIKUS jelvényszám kiosztás (mivel jelenleg nincsenek jelvényszámok).
     AutoBadge = true,
-    BadgeStart = 1000,   -- az első kiosztott jelvényszám
+    BadgeStart = 1000,
     AutoBadgeJobs = { police = true, ambulance = true, mechanic = true },
-
-    -- A /duty parancs engedélyezése a duty-köteles job-oknál
     EnableDutyCommand = true,
 }
 

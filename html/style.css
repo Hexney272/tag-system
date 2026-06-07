@@ -1,0 +1,11 @@
+
+body{margin:0;overflow:hidden;background:transparent;font-family:Arial}
+.tag{
+position:absolute;
+color:white;
+background:rgba(0,0,0,.45);
+padding:4px 8px;
+border-radius:8px;
+font-size:14px;
+white-space:nowrap;
+}

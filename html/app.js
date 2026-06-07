@@ -65,10 +65,17 @@ function renderPlayers(list) {
             el.querySelector('.death').style.display = 'none';
 
             // név + ID
-            const nameKey = `${p.name}|${p.serverId}`;
+            const nameKey = `${p.name || ''}|${p.serverId}`;
             if (el._cache.name !== nameKey) {
-                el.querySelector('.name').innerHTML =
-                    `${p.name} <span class="id">[${p.serverId}]</span>`;
+                const nameEl = el.querySelector('.name');
+                if (p.name) {
+                    nameEl.innerHTML = `${p.name} <span class="id">[${p.serverId}]</span>`;
+                    nameEl.style.display = '';
+                } else {
+                    // nincs karakternév (statebag) -> ne írjunk CFX nevet
+                    nameEl.innerHTML = `<span class="id">[${p.serverId}]</span>`;
+                    nameEl.style.display = '';
+                }
                 el._cache.name = nameKey;
             }
 

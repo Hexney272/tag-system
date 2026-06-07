@@ -8,8 +8,9 @@ end
 -- Localhoston (egyedül) ezzel láthatod a saját tagedet és szimulálhatsz állapotokat.
 local debugState = {
     showSelf = false,   -- /tagself  -> saját tag megjelenítése
+    name     = nil,     -- /tagname  -> karakternév szimuláció
     cuffed   = false,   -- /tagcuff  -> bilincs szimuláció
-    job      = nil,     -- /tagjob   -> frakció/rang sor
+    job      = nil,     -- /tagjob   -> frakció/rang sor (onDuty-val)
     deathTime = 0,      -- /tagdead  -> halott-időzítő
     showOwnVehicle = false, -- /tagplate -> saját autó rendszáma
 }
@@ -51,23 +52,39 @@ CreateThread(function()
                             local cuffed = st[Config.States.cuffed] or false
                             local deathTime = st[Config.States.dead] or 0
 
+                            -- KARAKTERNÉV a statebag-ből (nem a CFX/fiók név)
+                            local charName = st[Config.States.name]
+
                             -- debug felülírások a saját karakterre
                             if isSelf then
+                                if debugState.name then charName = debugState.name end
                                 if debugState.cuffed then cuffed = true end
                                 if debugState.job then job = debugState.job end
                                 if debugState.deathTime > 0 then deathTime = debugState.deathTime end
                             end
 
+                            -- ha nincs karakternév statebag, opcionálisan a CFX név
+                            if not charName then
+                                if Config.FallbackToCfxName then
+                                    charName = GetPlayerName(player)
+                                else
+                                    charName = nil
+                                end
+                            end
+
+                            -- frakció + rang CSAK ha a játékos dutyban van
+                            local showJob = job and job.label and job.onDuty == true
+
                             players[#players+1] = {
                                 serverId = serverId,
-                                name     = GetPlayerName(player),
+                                name     = charName,
                                 talking  = NetworkIsPlayerTalking(player),
                                 armour   = GetPedArmour(ped) > 0,
                                 weapon   = not isUnarmed(ped),
                                 cuffed   = cuffed,
                                 dead     = IsPedDeadOrDying(ped, true) or (deathTime > 0),
                                 deathRemaining = deathTime > 0 and math.max(0, deathTime - GetCloudTimeAsInt()) or 0,
-                                job      = job,
+                                job      = showJob and job or nil,
                                 x = sx, y = sy, scale = scale
                             }
                         end
@@ -93,6 +110,18 @@ RegisterCommand('tagcuff', function()
 end, false)
 
 -- /tagjob "Sheriff's Office" 1022 Trainee
+-- /tagname Brian Doung   -> karakternév szimuláció
+RegisterCommand('tagname', function(_, args)
+    if #args == 0 then
+        debugState.name = nil
+        print('[tag-system] Karakternev (teszt) torolve')
+        return
+    end
+    debugState.name = table.concat(args, ' ')
+    print(('[tag-system] Karakternev (teszt): %s'):format(debugState.name))
+end, false)
+
+-- /tagjob "Sheriff's Office" 1022 Trainee   (a teszthez automatikusan dutyban)
 RegisterCommand('tagjob', function(_, args)
     if #args == 0 then
         debugState.job = nil
@@ -103,8 +132,9 @@ RegisterCommand('tagjob', function(_, args)
         label = args[1] or 'Sheriff\'s Office',
         badge = tonumber(args[2]) or nil,
         grade = args[3] or nil,
+        onDuty = true,
     }
-    print('[tag-system] Job kijelzes beallitva')
+    print('[tag-system] Job kijelzes beallitva (onDuty = true)')
 end, false)
 
 -- /tagdead [masodperc]  (alap: Config.DeathTimer)
@@ -116,6 +146,7 @@ end, false)
 
 -- minden teszt-allapot torlese
 RegisterCommand('tagclear', function()
+    debugState.name = nil
     debugState.cuffed = false
     debugState.job = nil
     debugState.deathTime = 0

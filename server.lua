@@ -2,16 +2,34 @@
      Keretrendszer-független statebag kezelés.
      Más szkriptek az alábbi exportokkal állíthatják be az állapotokat. ]]--
 
+-- Karakternév beállítása (ez jelenik meg a fej fölött a CFX/fiók név helyett)
+-- pl. exports['tag-system']:SetName(source, "Brian Doung")
+local function SetName(playerId, charName)
+    Player(playerId).state:set(Config.States.name, charName, true)
+end
+
 -- Bilincs állapot (replikált statebag)
 -- pl. exports['tag-system']:SetCuffed(source, true)
 local function SetCuffed(playerId, value)
     Player(playerId).state:set(Config.States.cuffed, value and true or false, true)
 end
 
--- Munka / rang kijelzés a név alatt
--- pl. exports['tag-system']:SetJob(source, { label = "Sheriff's Office", badge = 1022, grade = "Trainee" })
+-- Munka / rang kijelzés a név alatt.
+-- FONTOS: a frakció + rang CSAK akkor jelenik meg, ha onDuty = true.
+-- pl. exports['tag-system']:SetJob(source, {
+--        label = "Sheriff's Office", badge = 1022, grade = "Trainee", onDuty = true })
 local function SetJob(playerId, jobData)
     Player(playerId).state:set(Config.States.job, jobData, true)
+end
+
+-- Duty állapot gyors váltása a meglévő job adat megtartásával
+-- pl. exports['tag-system']:SetOnDuty(source, true)
+local function SetOnDuty(playerId, onDuty)
+    local job = Player(playerId).state[Config.States.job]
+    if type(job) == 'table' then
+        job.onDuty = onDuty and true or false
+        Player(playerId).state:set(Config.States.job, job, true)
+    end
 end
 
 -- Halott állapot + EMS respawn időzítő indítása
@@ -27,8 +45,10 @@ local function ClearDead(playerId)
     Player(playerId).state:set(Config.States.dead, 0, true)
 end
 
+exports('SetName', SetName)
 exports('SetCuffed', SetCuffed)
 exports('SetJob', SetJob)
+exports('SetOnDuty', SetOnDuty)
 exports('SetDead', SetDead)
 exports('ClearDead', ClearDead)
 

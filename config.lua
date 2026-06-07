@@ -29,11 +29,16 @@ Config.PlateShowOwnVehicle = false -- a SAJÁT autód rendszáma is látszódjon
 
 -- Statebag kulcsok (más szkriptek ezeket állítják be)
 Config.States = {
+    name   = "charName",       -- Player(id).state.charName -> "Brian Doung" (karakternév)
     cuffed = "isCuffed",       -- Player(id).state.isCuffed
-    job    = "tagJob",         -- { label = "Sheriff's Office", badge = 1022, grade = "Trainee" }
+    job    = "tagJob",         -- { label, badge, grade, onDuty }
     dead   = "deathTime",      -- unix timestamp (mp), amikor a respawn lejár; 0 = él
     owned  = "ownedVehicle",   -- Entity(veh).state.ownedVehicle == true (játékos tulajdona)
 }
+
+-- Ha nincs beállítva karakternév statebag, essünk vissza a FiveM-fiók nevére?
+-- false esetén ilyenkor egyáltalán nem írunk nevet (csak a karakternevet fogadjuk el).
+Config.FallbackToCfxName = false
 
 -- Színek (a CSS-ben is ezek vannak, itt referenciaként)
 Config.Colors = {

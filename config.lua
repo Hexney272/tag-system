@@ -40,6 +40,34 @@ Config.States = {
 -- false esetén ilyenkor egyáltalán nem írunk nevet (csak a karakternevet fogadjuk el).
 Config.FallbackToCfxName = false
 
+-- ============ ESX LEGACY INTEGRÁCIÓ ============
+Config.ESX = {
+    enabled = true,
+    sharedObject = 'es_extended',
+
+    -- Csak ezeknél a job-oknál jelenik meg a frakció-sor, és CSAK dutyban.
+    -- kulcs = ESX job neve (xPlayer.job.name), érték = a kijelzett label
+    TaggedJobs = {
+        police    = "Rendőrség",
+        ambulance = "Mentőszolgálat",
+        mechanic  = "Szerelő",
+    },
+
+    -- Jelvényszám forrása:
+    -- "meta"  -> xPlayer.getMeta('badge')  (ESX Legacy metadata, users.metadata JSON-ban)
+    -- "query" -> oxmysql lekérdezés a BadgeQuery alapján
+    -- false   -> nincs jelvényszám
+    BadgeSource = "meta",
+    BadgeMetaKey = "badge",
+
+    -- oxmysql lekérdezés, ha BadgeSource = "query".
+    -- A ? helyére az identifier kerül; az első oszlop értéke lesz a jelvényszám.
+    BadgeQuery = "SELECT badge FROM users WHERE identifier = ?",
+
+    -- A /duty parancs engedélyezése a duty-köteles job-oknál
+    EnableDutyCommand = true,
+}
+
 -- Színek (a CSS-ben is ezek vannak, itt referenciaként)
 Config.Colors = {
     name  = "#FFFFFF",

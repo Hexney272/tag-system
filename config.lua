@@ -64,6 +64,15 @@ Config.ESX = {
     -- A ? helyére az identifier kerül; az első oszlop értéke lesz a jelvényszám.
     BadgeQuery = "SELECT badge FROM users WHERE identifier = ?",
 
+    -- AUTOMATIKUS jelvényszám kiosztás (mivel jelenleg nincsenek jelvényszámok).
+    -- Ha true és a játékosnak még nincs jelvénye, kap egy egyedi, sorszámozott számot.
+    -- A számokat a 'tag_system_badges' oxmysql tábla tárolja (automatikusan létrejön),
+    -- és a gyors eléréshez az ESX metadatába is bekerül.
+    AutoBadge = true,
+    BadgeStart = 1000,   -- az első kiosztott jelvényszám
+    -- mely job-ok kapjanak automatikus jelvényt (alapból a duty-köteles mind)
+    AutoBadgeJobs = { police = true, ambulance = true, mechanic = true },
+
     -- A /duty parancs engedélyezése a duty-köteles job-oknál
     EnableDutyCommand = true,
 }

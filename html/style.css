@@ -37,6 +37,12 @@ body {
     pointer-events: none;
 }
 
+/* ESC / inventory / bármilyen NUI fókusz esetén minden elrejtve */
+body.overlay-hidden #players,
+body.overlay-hidden #vehicles {
+    display: none !important;
+}
+
 /* ============ JÁTÉKOS TAG ============ */
 .tag {
     position: absolute;

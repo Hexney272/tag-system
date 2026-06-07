@@ -15,6 +15,30 @@ local debugState = {
     showOwnVehicle = false, -- /tagplate -> saját autó rendszáma
 }
 
+-- ============ ELREJTÉS (ESC / inventory / bármilyen NUI fókusz) ============
+-- Ha a pause menü (ESC) nyitva van, vagy egy másik resource NUI-ja fókuszt kapott
+-- (pl. inventory, telefon, menük), akkor elrejtjük a tageket és rendszámokat.
+local overlayHidden = false
+
+CreateThread(function()
+    local lastHidden = nil
+    while true do
+        overlayHidden = IsPauseMenuActive() or IsNuiFocused()
+
+        if overlayHidden ~= lastHidden then
+            lastHidden = overlayHidden
+            SendNUIMessage({ action = "visibility", visible = not overlayHidden })
+            if overlayHidden then
+                -- azonnal ürítsük is, hogy semmi ne "ragadjon be"
+                SendNUIMessage({ action = "players", players = {} })
+                SendNUIMessage({ action = "vehicles", vehicles = {} })
+            end
+        end
+
+        Wait(150)
+    end
+end)
+
 -- ============ JÁTÉKOS TAGEK ============
 CreateThread(function()
     while true do
@@ -93,8 +117,10 @@ CreateThread(function()
             end
         end
 
-        SendNUIMessage({ action = "players", players = players })
-        Wait(0)
+        if not overlayHidden then
+            SendNUIMessage({ action = "players", players = players })
+        end
+        Wait(overlayHidden and 250 or 0)
     end
 end)
 
@@ -236,13 +262,15 @@ CreateThread(function()
             end
         end
 
-        SendNUIMessage({
-            action = "vehicles",
-            vehicles = vehicles,
-            brand = Config.Brand,
-            server = Config.ServerName
-        })
+        if not overlayHidden then
+            SendNUIMessage({
+                action = "vehicles",
+                vehicles = vehicles,
+                brand = Config.Brand,
+                server = Config.ServerName
+            })
+        end
 
-        Wait(0)
+        Wait(overlayHidden and 250 or 0)
     end
 end)

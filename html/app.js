@@ -159,6 +159,15 @@ function renderVehicles(list, brand, server) {
 
 window.addEventListener('message', (e) => {
     const d = e.data;
+    if (d.action === 'visibility') {
+        document.body.classList.toggle('overlay-hidden', d.visible === false);
+        if (d.visible === false) {
+            // takarítás, hogy semmi ne maradjon a képernyőn
+            for (const id in tags) { tags[id].remove(); delete tags[id]; }
+            for (const id in plates) { plates[id].remove(); delete plates[id]; }
+        }
+        return;
+    }
     if (d.action === 'players') {
         renderPlayers(d.players || []);
     } else if (d.action === 'vehicles') {

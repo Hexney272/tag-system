@@ -17,19 +17,70 @@ local ESX = exports[Config.ESX.sharedObject]:getSharedObject()
 -- forrásonkénti duty állapot (alapból leszállva)
 local dutyState = {}
 
+-- ============ JELVÉNYSZÁM TÁBLA (oxmysql, auto) ============
+-- Egyedi, sorszámozott jelvényszámok tárolása. A tábla automatikusan létrejön.
+local badgeTableReady = false
+
+local function ensureBadgeTable()
+    if badgeTableReady or not Config.ESX.AutoBadge then return end
+    MySQL.query([[
+        CREATE TABLE IF NOT EXISTS `tag_system_badges` (
+            `badge` INT NOT NULL AUTO_INCREMENT,
+            `identifier` VARCHAR(60) NOT NULL,
+            `job` VARCHAR(32) DEFAULT NULL,
+            `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (`badge`),
+            UNIQUE KEY `uniq_identifier` (`identifier`)
+        ) AUTO_INCREMENT = ]] .. tostring(Config.ESX.BadgeStart) .. [[;
+    ]], {}, function()
+        badgeTableReady = true
+    end)
+end
+
+-- meglévő jelvény lekérése, vagy új kiosztása (identifier alapján)
+local function getOrCreateBadge(xPlayer, cb)
+    local identifier = xPlayer.identifier
+    MySQL.scalar('SELECT badge FROM tag_system_badges WHERE identifier = ?', { identifier }, function(existing)
+        if existing then
+            cb(existing)
+            return
+        end
+        MySQL.insert('INSERT INTO tag_system_badges (identifier, job) VALUES (?, ?)',
+            { identifier, xPlayer.job and xPlayer.job.name or nil }, function(insertId)
+                -- cache az ESX metadatába a gyors eléréshez
+                if xPlayer.setMeta then
+                    xPlayer.setMeta(Config.ESX.BadgeMetaKey, insertId)
+                end
+                cb(insertId)
+            end)
+    end)
+end
+
 -- ============ JELVÉNYSZÁM LEKÉRÉSE ============
+local function maybeAutoBadge(xPlayer, jobName, currentBadge, cb)
+    -- ha már van jelvény, vagy nincs auto, vagy a job nem jogosult -> ahogy van
+    if currentBadge or not Config.ESX.AutoBadge then
+        cb(currentBadge)
+        return
+    end
+    if not (jobName and Config.ESX.AutoBadgeJobs[jobName]) then
+        cb(currentBadge)
+        return
+    end
+    ensureBadgeTable()
+    getOrCreateBadge(xPlayer, cb)
+end
+
 local function getBadge(xPlayer, cb)
     local source = Config.ESX.BadgeSource
+    local jobName = xPlayer.job and xPlayer.job.name or nil
 
     if source == "meta" then
-        local badge = nil
-        if xPlayer.getMeta then
-            badge = xPlayer.getMeta(Config.ESX.BadgeMetaKey)
-        end
-        cb(badge)
+        local badge = xPlayer.getMeta and xPlayer.getMeta(Config.ESX.BadgeMetaKey) or nil
+        maybeAutoBadge(xPlayer, jobName, badge, cb)
     elseif source == "query" then
         MySQL.scalar(Config.ESX.BadgeQuery, { xPlayer.identifier }, function(result)
-            cb(result)
+            maybeAutoBadge(xPlayer, jobName, result, cb)
         end)
     else
         cb(nil)
@@ -131,6 +182,7 @@ end)
 -- a szkript (re)startjakor a már bent lévő játékosok frissítése
 AddEventHandler('onResourceStart', function(resourceName)
     if GetCurrentResourceName() ~= resourceName then return end
+    ensureBadgeTable()
     for _, playerId in ipairs(GetPlayers()) do
         local xPlayer = ESX.GetPlayerFromId(tonumber(playerId))
         if xPlayer then

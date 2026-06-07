@@ -1,13 +1,14 @@
 const playersEl  = document.getElementById('players');
 const vehiclesEl = document.getElementById('vehicles');
 
-// ====== Inline SVG ikonok (offline) ======
+// ====== Inline SVG ikonok (offline, élesek minden felbontáson) ======
+// FA6 stílusú formák: microphone-lines, handcuffs, shield-halved, gun, medical cross
 const ICONS = {
-    voice:  `<svg viewBox="0 0 24 24"><path d="M12 14a3 3 0 0 0 3-3V5a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-3.08A7 7 0 0 0 19 11h-2z"/></svg>`,
-    armour: `<svg viewBox="0 0 24 24"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z"/></svg>`,
-    weapon: `<svg viewBox="0 0 24 24"><path d="M7 5h13v4h-2v2h-4l-2 3H8l-1-2H4V7h3V5zm0 8h3l1 2v3H8l-1-2v-3z"/></svg>`,
-    cuffed: `<svg viewBox="0 0 24 24"><path d="M7 9a4 4 0 0 1 4 4v3a4 4 0 1 1-8 0v-3a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v3a2 2 0 1 0 4 0v-3a2 2 0 0 0-2-2zm10-2a4 4 0 0 1 4 4v3a4 4 0 1 1-8 0v-3a4 4 0 0 1 4-4zm0 2a2 2 0 0 0-2 2v3a2 2 0 1 0 4 0v-3a2 2 0 0 0-2-2zM8 7h8v2H8z"/></svg>`,
-    cross:  `<svg viewBox="0 0 24 24"><path d="M9 2h6v7h7v6h-7v7H9v-7H2V9h7z"/></svg>`
+    voice:  `<svg viewBox="0 0 384 512"><path d="M192 0C139 0 96 43 96 96v160c0 53 43 96 96 96s96-43 96-96V96c0-53-43-96-96-96zm-16 88a16 16 0 0 1 32 0 16 16 0 0 1-32 0zm0 80a16 16 0 0 1 32 0 16 16 0 0 1-32 0zm-128 88c0-13 11-24 24-24s24 11 24 24a96 96 0 0 0 192 0c0-13 11-24 24-24s24 11 24 24a144 144 0 0 1-120 142v34h48a24 24 0 0 1 0 48H120a24 24 0 0 1 0-48h48v-34A144 144 0 0 1 48 256z"/></svg>`,
+    armour: `<svg viewBox="0 0 512 512"><path d="M256 0c-4 0-8 1-12 3L54 84c-13 6-22 19-22 33 0 154 90 264 202 311 4 2 8 3 12 3V0z" opacity=".95"/><path d="M256 0c4 0 8 1 12 3l190 81c13 6 22 19 22 33 0 154-90 264-202 311-4 2-8 3-12 3V0z" opacity=".75"/></svg>`,
+    weapon: `<svg viewBox="0 0 640 512"><path d="M96 96c-18 0-32 14-32 32v32H32a32 32 0 0 0 0 64h32v32c0 18 14 32 32 32h48l40 56c6 8 15 12 25 12h53c12 0 23-7 28-18l18-38h156a48 48 0 0 0 48-48v-48a48 48 0 0 0-48-48H160v-28c0-18-14-32-32-32H96zm48 192h64l-26 48h-22l-16-22v-26z"/></svg>`,
+    cuffed: `<svg viewBox="0 0 640 512"><path d="M176 96a112 112 0 1 0 0 224 112 112 0 0 0 0-224zm0 64a48 48 0 1 1 0 96 48 48 0 0 1 0-96zM464 96a112 112 0 1 0 0 224 112 112 0 0 0 0-224zm0 64a48 48 0 1 1 0 96 48 48 0 0 1 0-96zM240 200h160v32H240z"/></svg>`,
+    cross:  `<svg viewBox="0 0 448 512"><path d="M160 32c-18 0-32 14-32 32v64H64c-18 0-32 14-32 32v96c0 18 14 32 32 32h64v128c0 18 14 32 32 32h128c18 0 32-14 32-32V320h64c18 0 32-14 32-32v-96c0-18-14-32-32-32h-64V64c0-18-14-32-32-32H160z"/></svg>`
 };
 
 const tags = {};   // serverId -> element

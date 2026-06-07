@@ -63,22 +63,57 @@ CreateThread(function()
 end)
 
 -- ============ JÁRMŰ RENDSZÁMTÁBLÁK ============
+-- Csak a játékosok által birtokolt / vezetett autók felett jelenik meg.
+local function gatherOwnedVehicles(myVeh)
+    local set = {}
+
+    -- 1) Játékosok által elfoglalt járművek
+    if Config.PlateShowOccupied then
+        for _, player in ipairs(GetActivePlayers()) do
+            local ped = GetPlayerPed(player)
+            if DoesEntityExist(ped) and IsPedInAnyVehicle(ped, false) then
+                local veh = GetVehiclePedIsIn(ped, false)
+                if veh ~= 0 then set[veh] = true end
+            end
+        end
+    end
+
+    -- 2) ownedVehicle statebaggel jelölt (akár parkoló) autók a közelben
+    if Config.PlateShowOwned then
+        local handle, veh = FindFirstVehicle()
+        local ok = true
+        repeat
+            if DoesEntityExist(veh) and Entity(veh).state[Config.States.owned] then
+                set[veh] = true
+            end
+            ok, veh = FindNextVehicle(handle)
+        until not ok
+        EndFindVehicle(handle)
+    end
+
+    -- Saját autó kizárása, ha nem kérted
+    if not Config.PlateShowOwnVehicle and myVeh and myVeh ~= 0 then
+        set[myVeh] = nil
+    end
+
+    return set
+end
+
 CreateThread(function()
     while true do
         local vehicles = {}
-        local myCoords = GetEntityCoords(PlayerPedId())
-        local handle, veh = FindFirstVehicle()
-        local success = true
+        local myPed = PlayerPedId()
+        local myCoords = GetEntityCoords(myPed)
+        local myVeh = GetVehiclePedIsIn(myPed, false)
 
-        repeat
+        for veh, _ in pairs(gatherOwnedVehicles(myVeh)) do
             if DoesEntityExist(veh) then
                 local coords = GetEntityCoords(veh)
                 local dist = #(coords - myCoords)
 
                 if dist <= Config.VehicleDistance then
-                    -- a jármű teteje fölé pozícionálunk
-                    local min, max = GetModelDimensions(GetEntityModel(veh))
-                    local topZ = (max.z) + Config.VehicleOffset
+                    local _, max = GetModelDimensions(GetEntityModel(veh))
+                    local topZ = max.z + Config.VehicleOffset
                     local plateCoords = GetOffsetFromEntityInWorldCoords(veh, 0.0, 0.0, topZ)
                     local onScreen, sx, sy = GetScreenCoordFromWorldCoord(plateCoords.x, plateCoords.y, plateCoords.z)
 
@@ -87,17 +122,14 @@ CreateThread(function()
                         if scale < 0.5 then scale = 0.5 end
 
                         vehicles[#vehicles+1] = {
-                            netId = VehToNet(veh),
+                            netId = NetworkGetEntityIsNetworked(veh) and VehToNet(veh) or veh,
                             plate = (GetVehicleNumberPlateText(veh) or ""):gsub("%s+$", ""),
                             x = sx, y = sy, scale = scale
                         }
                     end
                 end
             end
-            success, veh = FindNextVehicle(handle)
-        until not success
-
-        EndFindVehicle(handle)
+        end
 
         SendNUIMessage({
             action = "vehicles",

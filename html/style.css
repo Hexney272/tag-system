@@ -4,6 +4,19 @@
     --c-voice: #4CAF50;
     --c-dead:  #FF4444;
     --c-rank:  #D4AF37;
+
+    /* Erős fekete kontúr a jó olvashatóságért */
+    --outline:
+        0 0 2px #000,
+        0 0 4px #000,
+        0 0 6px rgba(0, 0, 0, 0.9);
+}
+
+/* Rendszámtábla font (cseréld a sajátodra, ha van FE-Schrift / License Plate USA fájlod) */
+@font-face {
+    font-family: 'LicensePlate';
+    src: local('FE-Schrift'), local('License Plate USA'), local('Consolas');
+    font-display: swap;
 }
 
 * { box-sizing: border-box; }
@@ -12,9 +25,10 @@ body {
     margin: 0;
     overflow: hidden;
     background: transparent;
-    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+    font-family: 'Inter', 'Roboto', 'Segoe UI', sans-serif;
     user-select: none;
     -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
 }
 
 #players, #vehicles {
@@ -32,10 +46,10 @@ body {
     gap: 3px;
     transform-origin: center bottom;
     will-change: left, top, transform;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+    text-shadow: var(--outline);
 }
 
-/* Név + ID + ikonok egy sorban (a kép szerint az ikonok a név JOBB oldalán) */
+/* Név + ID + ikonok egy sorban (ikonok a név JOBB oldalán) */
 .tag .row {
     display: flex;
     align-items: center;
@@ -44,27 +58,28 @@ body {
 }
 
 .tag .name {
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 500;        /* Inter Medium - a kép szerint */
     color: var(--c-name);
+    letter-spacing: 0.2px;
 }
 
 .tag .name .id {
     color: var(--c-id);
-    font-weight: 600;
+    font-weight: 500;
     margin-left: 3px;
 }
 
 /* Frakció / rang sor a név alatt */
 .tag .job {
-    font-size: 12px;
-    font-weight: 600;
+    font-size: 13px;
+    font-weight: 600;        /* Inter SemiBold */
     color: var(--c-rank);
     letter-spacing: 0.2px;
 }
 
 .tag .job .badge {
-    opacity: 0.9;
+    opacity: 0.92;
 }
 
 /* Ikonok */
@@ -78,14 +93,14 @@ body {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 17px;
-    height: 17px;
+    width: 15px;
+    height: 15px;
 }
 
 .icon svg {
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.9));
+    filter: drop-shadow(0 0 2px #000) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.9));
 }
 
 .icon.voice  svg { fill: var(--c-voice); }
@@ -112,7 +127,7 @@ body {
     align-items: center;
     gap: 1px;
     color: var(--c-dead);
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.95);
+    text-shadow: var(--outline);
 }
 
 .death .cross {
@@ -120,11 +135,16 @@ body {
     height: 20px;
 }
 
-.death .cross svg { width: 100%; height: 100%; fill: var(--c-dead); }
+.death .cross svg {
+    width: 100%;
+    height: 100%;
+    fill: var(--c-dead);
+    filter: drop-shadow(0 0 3px #000);
+}
 
 .death .timer {
-    font-size: 15px;
-    font-weight: 800;
+    font-size: 16px;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
     letter-spacing: 1px;
 }
@@ -140,6 +160,8 @@ body {
 }
 
 .plate .board {
+    /* Ha van plate.png textúrád, kommenteld ki a gradientet és használd ezt:
+       background: url('plate.png') center/100% 100% no-repeat; */
     background: linear-gradient(180deg, #f7f7f2 0%, #e9e9e0 100%);
     border: 2px solid #1c1c1c;
     border-radius: 6px;
@@ -163,7 +185,7 @@ body {
     color: #1c1c1c;
     letter-spacing: 2px;
     line-height: 1.1;
-    font-family: 'Consolas', 'Courier New', monospace;
+    font-family: 'LicensePlate', 'Consolas', 'Courier New', monospace;
 }
 
 .plate .sub {

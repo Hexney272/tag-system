@@ -4,6 +4,16 @@ local function isUnarmed(ped)
     return GetSelectedPedWeapon(ped) == `WEAPON_UNARMED`
 end
 
+-- ============ TESZT / DEBUG ÁLLAPOT ============
+-- Localhoston (egyedül) ezzel láthatod a saját tagedet és szimulálhatsz állapotokat.
+local debugState = {
+    showSelf = false,   -- /tagself  -> saját tag megjelenítése
+    cuffed   = false,   -- /tagcuff  -> bilincs szimuláció
+    job      = nil,     -- /tagjob   -> frakció/rang sor
+    deathTime = 0,      -- /tagdead  -> halott-időzítő
+    showOwnVehicle = false, -- /tagplate -> saját autó rendszáma
+}
+
 -- ============ JÁTÉKOS TAGEK ============
 CreateThread(function()
     while true do
@@ -13,16 +23,17 @@ CreateThread(function()
 
         for _, player in ipairs(GetActivePlayers()) do
             local ped = GetPlayerPed(player)
+            local isSelf = (ped == myPed)
 
-            if ped ~= myPed and DoesEntityExist(ped) then
+            -- a saját karaktert csak debug-módban mutatjuk
+            if DoesEntityExist(ped) and (not isSelf or debugState.showSelf) then
                 local coords = GetEntityCoords(ped)
                 local dist = #(coords - myCoords)
 
                 if dist <= Config.PlayerDistance then
-                    local visible = true
-                    if Config.RequireLineOfSight then
-                        visible = HasEntityClearLosToEntity(myPed, ped, 17)
-                    end
+                    -- saját magunkra nincs értelme fal-ellenőrzést futtatni
+                    local visible = isSelf or (not Config.RequireLineOfSight)
+                        or HasEntityClearLosToEntity(myPed, ped, 17)
 
                     if visible then
                         local headCoords = vector3(coords.x, coords.y, coords.z + Config.HeadOffset)
@@ -36,8 +47,16 @@ CreateThread(function()
                             local scale = 1.0 - (dist / Config.PlayerDistance) * 0.55
                             if scale < 0.45 then scale = 0.45 end
 
-                            local job = st[Config.States.job] -- { label, badge, grade }
+                            local job = st[Config.States.job]
+                            local cuffed = st[Config.States.cuffed] or false
                             local deathTime = st[Config.States.dead] or 0
+
+                            -- debug felülírások a saját karakterre
+                            if isSelf then
+                                if debugState.cuffed then cuffed = true end
+                                if debugState.job then job = debugState.job end
+                                if debugState.deathTime > 0 then deathTime = debugState.deathTime end
+                            end
 
                             players[#players+1] = {
                                 serverId = serverId,
@@ -45,7 +64,7 @@ CreateThread(function()
                                 talking  = NetworkIsPlayerTalking(player),
                                 armour   = GetPedArmour(ped) > 0,
                                 weapon   = not isUnarmed(ped),
-                                cuffed   = st[Config.States.cuffed] or false,
+                                cuffed   = cuffed,
                                 dead     = IsPedDeadOrDying(ped, true) or (deathTime > 0),
                                 deathRemaining = deathTime > 0 and math.max(0, deathTime - GetCloudTimeAsInt()) or 0,
                                 job      = job,
@@ -61,6 +80,61 @@ CreateThread(function()
         Wait(0)
     end
 end)
+
+-- ============ TESZT PARANCSOK (kliens oldal, localhost) ============
+RegisterCommand('tagself', function()
+    debugState.showSelf = not debugState.showSelf
+    print(('[tag-system] Sajat tag: %s'):format(debugState.showSelf and 'BE' or 'KI'))
+end, false)
+
+RegisterCommand('tagcuff', function()
+    debugState.cuffed = not debugState.cuffed
+    print(('[tag-system] Bilincs (teszt): %s'):format(debugState.cuffed and 'BE' or 'KI'))
+end, false)
+
+-- /tagjob "Sheriff's Office" 1022 Trainee
+RegisterCommand('tagjob', function(_, args)
+    if #args == 0 then
+        debugState.job = nil
+        print('[tag-system] Job kijelzes torolve')
+        return
+    end
+    debugState.job = {
+        label = args[1] or 'Sheriff\'s Office',
+        badge = tonumber(args[2]) or nil,
+        grade = args[3] or nil,
+    }
+    print('[tag-system] Job kijelzes beallitva')
+end, false)
+
+-- /tagdead [masodperc]  (alap: Config.DeathTimer)
+RegisterCommand('tagdead', function(_, args)
+    local secs = tonumber(args[1]) or Config.DeathTimer
+    debugState.deathTime = GetCloudTimeAsInt() + secs
+    print(('[tag-system] Halott-idozito (teszt): %d mp'):format(secs))
+end, false)
+
+-- minden teszt-allapot torlese
+RegisterCommand('tagclear', function()
+    debugState.cuffed = false
+    debugState.job = nil
+    debugState.deathTime = 0
+    print('[tag-system] Teszt allapotok torolve')
+end, false)
+
+-- gyors fegyver + pancel a teszteléshez
+RegisterCommand('taggear', function()
+    local ped = PlayerPedId()
+    GiveWeaponToPed(ped, `WEAPON_PISTOL`, 250, false, true)
+    SetPedArmour(ped, 100)
+    print('[tag-system] Pisztoly + pancel kiosztva (fegyver/pancel ikon teszt)')
+end, false)
+
+-- saját autó rendszámának megjelenítése (teszt)
+RegisterCommand('tagplate', function()
+    debugState.showOwnVehicle = not debugState.showOwnVehicle
+    print(('[tag-system] Sajat auto rendszam (teszt): %s'):format(debugState.showOwnVehicle and 'BE' or 'KI'))
+end, false)
 
 -- ============ JÁRMŰ RENDSZÁMTÁBLÁK ============
 -- Csak a játékosok által birtokolt / vezetett autók felett jelenik meg.
@@ -91,8 +165,8 @@ local function gatherOwnedVehicles(myVeh)
         EndFindVehicle(handle)
     end
 
-    -- Saját autó kizárása, ha nem kérted
-    if not Config.PlateShowOwnVehicle and myVeh and myVeh ~= 0 then
+    -- Saját autó kizárása, ha nem kérted (teszthez /tagplate-tel bekapcsolható)
+    if not (Config.PlateShowOwnVehicle or debugState.showOwnVehicle) and myVeh and myVeh ~= 0 then
         set[myVeh] = nil
     end
 

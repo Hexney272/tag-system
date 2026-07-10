@@ -26,14 +26,9 @@ end
 -- pl. exports['tag-system']:SetOnDuty(source, true)
 local function SetOnDuty(playerId, onDuty)
     local job = Player(playerId).state[Config.States.job]
-    print(('[tag-system] SetOnDuty(%s, %s) - Current job: %s'):format(playerId, tostring(onDuty), job and json.encode(job) or 'NIL'))
-    
     if type(job) == 'table' then
         job.onDuty = onDuty and true or false
         Player(playerId).state:set(Config.States.job, job, true)
-        print(('[tag-system] Job updated: %s'):format(json.encode(job)))
-    else
-        print(('[tag-system] ERROR: Job is not a table! Type: %s'):format(type(job)))
     end
 end
 

@@ -58,10 +58,6 @@ end
 
 local function updateAdminTag(source)
     local adminTag = getAdminTag(source)
-    
-    -- Debug log
-    print(('[tag-system] [ADMIN] Player %s - Admin tag: %s'):format(source, adminTag and adminTag.label or 'NIL'))
-    
     Player(source).state:set(Config.States.admin, adminTag, true)
 end
 

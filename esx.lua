@@ -150,24 +150,17 @@ if Config.ESX.EnableDutyCommand then
         if not xPlayer then return end
 
         local jobName = xPlayer.job and xPlayer.job.name or nil
-        print(('[tag-system] /duty command - Player: %s, Job: %s'):format(source, jobName or 'NIL'))
-        
         if not (jobName and Config.ESX.TaggedJobs[jobName]) then
             TriggerClientEvent('esx:showNotification', source, 'Nincs duty-köteles munkád.')
             return
         end
 
         -- ha még nincs job statebag (pl. friss belépés), állítsuk be előbb
-        local currentJob = Player(source).state[Config.States.job]
-        print(('[tag-system] Current job state: %s'):format(currentJob and json.encode(currentJob) or 'NIL'))
-        
-        if type(currentJob) ~= 'table' then
-            print('[tag-system] Job state missing, calling updateJob()')
+        if type(Player(source).state[Config.States.job]) ~= 'table' then
             updateJob(xPlayer)
         end
 
         local newDuty = not (dutyState[source] or false)
-        print(('[tag-system] Duty toggle: %s -> %s'):format(tostring(dutyState[source]), tostring(newDuty)))
         setDuty(source, newDuty)
 
         TriggerClientEvent('esx:showNotification', source,

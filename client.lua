@@ -98,11 +98,6 @@ CreateThread(function()
                             local cuffed = st[Config.States.cuffed] or false
                             local deathTime = st[Config.States.dead] or 0
                             local charName = st[Config.States.name]
-                            
-                            -- Debug: Ellenőrizzük az admin state-et (csak saját magunkra)
-                            if isSelf and debugState.showSelf then
-                                print(('[tag-system] [CLIENT] Admin state: %s'):format(admin and json.encode(admin) or 'NIL'))
-                            end
 
                             if isSelf then
                                 if debugState.name then charName = debugState.name end

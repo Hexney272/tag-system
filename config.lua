@@ -86,6 +86,22 @@ Config.ESX = {
     EnableDutyCommand = true,
 }
 
+-- ============ MUNKA SZÍNEK ============
+-- Minden munkának beállíthatsz egyedi színt (hex formátumban)
+-- A rang/grade mindig marad az eredeti sárga szín
+Config.JobColors = {
+    police    = "#3B82F6",  -- kék
+    ambulance = "#EF4444",  -- piros
+    mechanic  = "#F59E0B",  -- narancs
+    taxi      = "#EAB308",  -- sárga
+    reporter  = "#8B5CF6",  -- lila
+    realestate = "#10B981", -- zöld
+    cardealer = "#06B6D4",  -- ciánkék
+    -- Add hozzá további munkákat és színeket ide:
+    -- banker    = "#059669",
+    -- lawyer    = "#DC2626",
+}
+
 -- Színek (referenciaként)
 Config.Colors = {
     name  = "#FFFFFF",

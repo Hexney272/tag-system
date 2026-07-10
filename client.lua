@@ -4,6 +4,15 @@ local function isUnarmed(ped)
     return GetSelectedPedWeapon(ped) == `WEAPON_UNARMED`
 end
 
+-- Küldjük el a munka színeket az NUI-nak inicializáláskor
+CreateThread(function()
+    Wait(500) -- kis késleltetés, hogy az NUI biztosan betöltődjön
+    SendNUIMessage({
+        action = "setJobColors",
+        colors = Config.JobColors or {}
+    })
+end)
+
 -- ============ TESZT / DEBUG ÁLLAPOT ============
 local debugState = {
     showSelf = false,
@@ -127,6 +136,7 @@ CreateThread(function()
                                 dead     = IsPedDeadOrDying(ped, true) or (deathTime > 0),
                                 deathRemaining = deathTime > 0 and math.max(0, deathTime - GetCloudTimeAsInt()) or 0,
                                 job      = showJob and job or nil,
+                                jobName  = showJob and job.name or nil,
                                 x = sx, y = sy, scale = scale
                             }
                         end

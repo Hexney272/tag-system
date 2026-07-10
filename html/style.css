@@ -78,11 +78,22 @@ body.overlay-hidden #vehicles {
 .tag .job {
     font-size: 13px;
     font-weight: 600;
-    color: var(--c-rank);
     letter-spacing: 0.2px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.tag .job .job-label {
+    color: inherit; /* A szín dinamikusan lesz beállítva JS-ből */
+}
+
+.tag .job .rank {
+    color: var(--c-rank); /* A rang mindig sárga marad */
 }
 
 .tag .job .badge {
+    color: var(--c-rank); /* A jelvényszám is sárga */
     opacity: 0.92;
 }
 

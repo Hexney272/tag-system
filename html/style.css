@@ -55,6 +55,30 @@ body.overlay-hidden #vehicles {
     text-shadow: var(--outline);
 }
 
+.tag .admin {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 1px solid currentColor;
+    box-shadow: 0 0 8px currentColor;
+    animation: adminGlow 2s ease-in-out infinite;
+}
+
+@keyframes adminGlow {
+    0%, 100% { 
+        box-shadow: 0 0 8px currentColor;
+        opacity: 1;
+    }
+    50% { 
+        box-shadow: 0 0 15px currentColor;
+        opacity: 0.9;
+    }
+}
+
 .tag .row {
     display: flex;
     align-items: center;

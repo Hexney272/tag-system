@@ -83,6 +83,7 @@ function renderPlayers(list) {
             el = document.createElement('div');
             el.className = 'tag';
             el.innerHTML = `
+                <div class="admin"></div>
                 <div class="row">
                     <span class="name"></span>
                     <span class="icons"></span>
@@ -110,6 +111,22 @@ function renderPlayers(list) {
             el.querySelector('.timer').textContent = fmtTime(p.deathRemaining);
         } else {
             el.querySelector('.death').style.display = 'none';
+
+            // admin tag
+            const adminEl = el.querySelector('.admin');
+            if (p.admin && p.admin.label) {
+                const adminHtml = p.admin.label;
+                const adminColor = p.admin.color || '#FF0000';
+                if (el._cache.admin !== adminHtml) {
+                    adminEl.textContent = adminHtml;
+                    adminEl.style.color = adminColor;
+                    el._cache.admin = adminHtml;
+                }
+                adminEl.style.display = 'block';
+            } else {
+                adminEl.style.display = 'none';
+                el._cache.admin = null;
+            }
 
             // név + ID
             const nameKey = `${p.name || ''}|${p.serverId}`;

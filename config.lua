@@ -35,6 +35,7 @@ Config.States = {
     radio    = "onRadio",
     phone    = "usingPhone",
     seatbelt = "seatbelt",
+    admin    = "adminTag",  -- Admin tag megjelenítése
 }
 
 -- Ikon megjelenítési kapcsolók
@@ -86,6 +87,38 @@ Config.ESX = {
     BadgeStart = 1000,
     AutoBadgeJobs = { police = true, ambulance = true, mechanic = true },
     EnableDutyCommand = true,
+}
+
+-- ============ ADMIN TAG RENDSZER ============
+Config.Admin = {
+    enabled = true,
+    -- Admin felismerési módszer:
+    -- "ace" = ACE permissions rendszer (txAdmin, vMenu, stb.)
+    -- "esx" = ESX group rendszer (superadmin, admin, mod)
+    -- "custom" = Egyedi function (ld. lentebb)
+    method = "ace",
+    
+    -- ACE permissions (ha method = "ace")
+    acePermission = "admin",  -- Minimum permission szint
+    
+    -- ESX groups (ha method = "esx")
+    esxGroups = {
+        superadmin = { label = "TULAJDONOS", color = "#FF0000" },  -- piros
+        admin      = { label = "ADMIN", color = "#FF6B00" },        -- narancs
+        mod        = { label = "MODERÁTOR", color = "#FFD700" },    -- arany
+        helper     = { label = "HELPER", color = "#00FF00" },       -- zöld
+    },
+    
+    -- Custom function (ha method = "custom")
+    -- Példa: return GetPlayerIdentifierByType(source, 'discord') == 'discord:123456789'
+    customCheck = function(source)
+        -- Itt írd meg a saját logikádat
+        return false
+    end,
+    
+    -- Admin tag megjelenítése
+    showAboveName = true,      -- A név FELETT jelenjen meg (true) vagy ALATT, a job helyén (false)
+    hideJobWhenAdmin = false,  -- Ha true, admin duty közben elrejti a job tag-et
 }
 
 -- ============ MUNKA SZÍNEK ============

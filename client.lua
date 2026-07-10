@@ -19,6 +19,7 @@ local debugState = {
     name     = nil,
     cuffed   = false,
     job      = nil,
+    admin    = nil,
     deathTime = 0,
     showOwnVehicle = false,
     radio    = false,
@@ -93,6 +94,7 @@ CreateThread(function()
                             if scale < 0.45 then scale = 0.45 end
 
                             local job = st[Config.States.job]
+                            local admin = st[Config.States.admin]
                             local cuffed = st[Config.States.cuffed] or false
                             local deathTime = st[Config.States.dead] or 0
                             local charName = st[Config.States.name]
@@ -101,6 +103,7 @@ CreateThread(function()
                                 if debugState.name then charName = debugState.name end
                                 if debugState.cuffed then cuffed = true end
                                 if debugState.job then job = debugState.job end
+                                if debugState.admin then admin = debugState.admin end
                                 if debugState.deathTime > 0 then deathTime = debugState.deathTime end
                             end
 
@@ -109,6 +112,11 @@ CreateThread(function()
                             end
 
                             local showJob = job and job.label and job.onDuty == true
+                            
+                            -- Admin tag logika
+                            if Config.Admin and Config.Admin.enabled and admin and Config.Admin.hideJobWhenAdmin then
+                                showJob = false  -- Admin tag elrejti a job tag-et
+                            end
                             local inVehicle = IsPedInAnyVehicle(ped, false)
                             local talking = NetworkIsPlayerTalking(player)
 
@@ -137,6 +145,7 @@ CreateThread(function()
                                 deathRemaining = deathTime > 0 and math.max(0, deathTime - GetCloudTimeAsInt()) or 0,
                                 job      = showJob and job or nil,
                                 jobName  = showJob and job.name or nil,
+                                admin    = admin or nil,
                                 x = sx, y = sy, scale = scale
                             }
                         end
@@ -177,6 +186,17 @@ RegisterCommand('tagjob', function(_, args)
     }
 end, false)
 
+RegisterCommand('tagadmin', function(_, args)
+    if #args == 0 then 
+        debugState.admin = nil 
+        return 
+    end
+    debugState.admin = {
+        label = args[1] or 'ADMIN',
+        color = args[2] or '#FF0000',
+    }
+end, false)
+
 RegisterCommand('tagdead', function(_, args)
     local secs = tonumber(args[1]) or Config.DeathTimer
     debugState.deathTime = GetCloudTimeAsInt() + secs
@@ -186,6 +206,7 @@ RegisterCommand('tagclear', function()
     debugState.name = nil
     debugState.cuffed = false
     debugState.job = nil
+    debugState.admin = nil
     debugState.deathTime = 0
     debugState.radio = false
     debugState.phone = false

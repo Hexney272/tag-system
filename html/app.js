@@ -1,6 +1,9 @@
 const playersEl  = document.getElementById('players');
 const vehiclesEl = document.getElementById('vehicles');
 
+// ====== MUNKA SZÍNEK ======
+let jobColors = {};
+
 // ====== Inline SVG ikonok (a felhasználó által megadott kártya-stílus) ======
 const BG_WHITE = { fill: '#ECECEC', stroke: '#B8B8B8' };
 const BG_GREEN = { fill: '#CFE4CF', stroke: '#9BB79B' };
@@ -124,11 +127,17 @@ function renderPlayers(list) {
             const jobEl = el.querySelector('.job');
             if (p.job && p.job.label) {
                 const badge = p.job.badge ? ` <span class="badge">#${p.job.badge}</span>` : '';
-                const grade = p.job.grade ? ` ${p.job.grade}` : '';
-                const jobHtml = `${p.job.label}${badge}${grade}`;
+                const grade = p.job.grade ? ` <span class="rank">${p.job.grade}</span>` : '';
+                const jobHtml = `<span class="job-label">${p.job.label}</span>${badge}${grade}`;
                 if (el._cache.job !== jobHtml) {
                     jobEl.innerHTML = jobHtml;
                     el._cache.job = jobHtml;
+                    
+                    // Állítsuk be a munka színét, ha van beállítva
+                    const jobLabelEl = jobEl.querySelector('.job-label');
+                    if (jobLabelEl && p.jobName && jobColors[p.jobName]) {
+                        jobLabelEl.style.color = jobColors[p.jobName];
+                    }
                 }
                 jobEl.style.display = 'block';
             } else {
@@ -215,6 +224,10 @@ window.addEventListener('message', (e) => {
             for (const id in tags) { tags[id].remove(); delete tags[id]; }
             for (const id in plates) { plates[id].remove(); delete plates[id]; }
         }
+        return;
+    }
+    if (d.action === 'setJobColors') {
+        jobColors = d.colors || {};
         return;
     }
     if (d.action === 'players') {

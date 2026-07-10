@@ -106,6 +106,7 @@ local function updateJob(xPlayer)
 
     getBadge(xPlayer, function(badge)
         exports['tag-system']:SetJob(xPlayer.source, {
+            name   = jobName,  -- hozzáadva a munka kulcsa (pl. "police", "ambulance")
             label  = label,
             badge  = badge and tonumber(badge) or badge,
             grade  = xPlayer.job.grade_label,

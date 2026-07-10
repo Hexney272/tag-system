@@ -129,15 +129,23 @@ function renderPlayers(list) {
                 const badge = p.job.badge ? ` <span class="badge">#${p.job.badge}</span>` : '';
                 const grade = p.job.grade ? ` <span class="rank">${p.job.grade}</span>` : '';
                 const jobHtml = `<span class="job-label">${p.job.label}</span>${badge}${grade}`;
-                if (el._cache.job !== jobHtml) {
+                
+                // Cache kulcs tartalmazza a jobName-t is, hogy színváltáskor frissüljön
+                const cacheKey = `${jobHtml}|${p.jobName || ''}`;
+                
+                if (el._cache.job !== cacheKey) {
                     jobEl.innerHTML = jobHtml;
-                    el._cache.job = jobHtml;
                     
-                    // Állítsuk be a munka színét, ha van beállítva
+                    // Állítsuk be a munka színét AZUTÁN, hogy létrehoztuk az elemet
                     const jobLabelEl = jobEl.querySelector('.job-label');
                     if (jobLabelEl && p.jobName && jobColors[p.jobName]) {
                         jobLabelEl.style.color = jobColors[p.jobName];
+                    } else if (jobLabelEl) {
+                        // Ha nincs egyedi szín, fehér legyen (alapértelmezett)
+                        jobLabelEl.style.color = '#FFFFFF';
                     }
+                    
+                    el._cache.job = cacheKey;
                 }
                 jobEl.style.display = 'block';
             } else {

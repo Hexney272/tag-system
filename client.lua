@@ -217,15 +217,25 @@ end, false)
 local ownedSet = {}
 local lastOwnedScan = 0
 
-local function refreshOwnedVehicles(myVeh)
+local function refreshOwnedVehicles(myPed, myVeh)
     local set = {}
 
     if Config.PlateShowOccupied then
         for _, player in ipairs(GetActivePlayers()) do
             local ped = GetPlayerPed(player)
+            -- NE szűrjük ki a saját magunk által látott járműveket!
+            -- Csak azt nézzük, hogy van-e benne játékos
             if DoesEntityExist(ped) and IsPedInAnyVehicle(ped, false) then
                 local veh = GetVehiclePedIsIn(ped, false)
-                if veh ~= 0 then set[veh] = true end
+                if veh ~= 0 then 
+                    -- Ha ez más játékos járműve, mindig látszik
+                    -- Ha ez a saját járművünk, csak akkor látszik, ha a config engedi
+                    if ped ~= myPed then
+                        set[veh] = true
+                    elseif Config.PlateShowOwnVehicle or debugState.showOwnVehicle then
+                        set[veh] = true
+                    end
+                end
             end
         end
     end
@@ -235,15 +245,15 @@ local function refreshOwnedVehicles(myVeh)
         local ok = true
         repeat
             if DoesEntityExist(veh) and Entity(veh).state[Config.States.owned] then
-                set[veh] = true
+                -- Birtokolt járművek is látszanak (parkoló autók)
+                -- Ha ez a saját járművünk és benne ülünk, akkor a fenti szabály érvényes
+                if veh ~= myVeh or Config.PlateShowOwnVehicle or debugState.showOwnVehicle then
+                    set[veh] = true
+                end
             end
             ok, veh = FindNextVehicle(handle)
         until not ok
         EndFindVehicle(handle)
-    end
-
-    if not (Config.PlateShowOwnVehicle or debugState.showOwnVehicle) and myVeh and myVeh ~= 0 then
-        set[myVeh] = nil
     end
 
     return set
@@ -263,7 +273,7 @@ CreateThread(function()
             local now = GetGameTimer()
             if (now - lastOwnedScan) > 500 then
                 lastOwnedScan = now
-                ownedSet = refreshOwnedVehicles(myVeh)
+                ownedSet = refreshOwnedVehicles(myPed, myVeh)
             end
 
             local vehicles = {}

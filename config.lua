@@ -19,9 +19,11 @@ Config.Plate = {
 }
 
 -- ============ RENDSZÁMTÁBLA LÁTHATÓSÁG ============
-Config.PlateShowOccupied = true    -- játékos által vezetett/utazott autók
+-- FONTOS: Más játékosok járművei MINDIG látszanak, függetlenül ezektől a beállításoktól!
+-- Ezek csak a saját járműved és a nem vezetett járművek viselkedését befolyásolják.
+Config.PlateShowOccupied = true    -- játékos által vezetett/utazott autók (más játékosoké MINDIG látszik)
 Config.PlateShowOwned    = true    -- ownedVehicle statebaggel jelölt (parkoló) autók
-Config.PlateShowOwnVehicle = false -- a SAJÁT autód rendszáma is látszódjon-e
+Config.PlateShowOwnVehicle = false -- a SAJÁT autód rendszáma is látszódjon-e NEKED
 
 -- Statebag kulcsok (más szkriptek ezeket állítják be)
 Config.States = {

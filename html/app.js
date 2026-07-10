@@ -117,6 +117,12 @@ function renderPlayers(list) {
             if (p.admin && p.admin.label) {
                 const adminHtml = p.admin.label;
                 const adminColor = p.admin.color || '#FF0000';
+                
+                // Debug log (első alkalommal)
+                if (!el._cache.admin || el._cache.admin !== adminHtml) {
+                    console.log('[tag-system] Admin tag:', p.admin);
+                }
+                
                 if (el._cache.admin !== adminHtml) {
                     adminEl.textContent = adminHtml;
                     adminEl.style.color = adminColor;

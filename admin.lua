@@ -58,6 +58,10 @@ end
 
 local function updateAdminTag(source)
     local adminTag = getAdminTag(source)
+    
+    -- Debug log
+    print(('[tag-system] [ADMIN] Player %s - Admin tag: %s'):format(source, adminTag and adminTag.label or 'NIL'))
+    
     Player(source).state:set(Config.States.admin, adminTag, true)
 end
 
@@ -118,6 +122,29 @@ end)
 exports('RefreshAdminTag', updateAdminTag)
 
 -- ============ PARANCSOK (csak adminoknak) ============
+
+-- DEBUG: Teszteléshez - szerver oldalon állítja be az admin tag-et
+RegisterCommand('setadmin', function(source, args)
+    if source == 0 then return end
+    
+    local label = args[1] or "ADMIN"
+    local color = args[2] or "#FF0000"
+    
+    local adminTag = {
+        label = label,
+        color = color
+    }
+    
+    Player(source).state:set(Config.States.admin, adminTag, true)
+    
+    print(('[tag-system] [DEBUG] Set admin tag for %s: %s (%s)'):format(source, label, color))
+    
+    TriggerClientEvent('chat:addMessage', source, {
+        color = {0, 255, 0},
+        multiline = true,
+        args = {"Tag System", "Admin tag beállítva: " .. label}
+    })
+end, false)
 
 -- /admintag on/off - Admin tag be/kikapcsolása (személyes kapcsoló)
 local adminTagEnabled = {}

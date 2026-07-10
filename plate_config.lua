@@ -23,7 +23,8 @@ Config.Plate.TypeSystem = {
 
     -- Ha egy 18-as (emergency) osztályú addon jármű nincs a listákban,
     -- ezt a típust kapja. false esetén civil marad.
-    EmergencyFallback = 'police',
+    -- 'police' = rendőrségi, 'ambulance' = mentő, 'civil' = civil, false = civil
+    EmergencyFallback = false,  -- Addon emergency járművek alapértelmezetten civil rendszámot kapnak
 
     Labels = {
         civil     = Config.Plate.Region or 'RealCity',
